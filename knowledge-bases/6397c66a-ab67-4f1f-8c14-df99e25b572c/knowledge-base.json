@@ -1,0 +1,189 @@
+{
+  "siteSummary": {
+    "name": "Wikipedia",
+    "description": "Wikipedia is a free online encyclopedia, created and edited by volunteers around the world and hosted by the Wikimedia Foundation.",
+    "industry": "E-commerce",
+    "primaryPurpose": "Information",
+    "targetAudience": [
+      "Business Owners",
+      "Marketing Professionals",
+      "IT Professionals"
+    ],
+    "keyValueProps": [
+      "we have"
+    ],
+    "brandVoice": "Helpful & Supportive"
+  },
+  "topics": [
+    {
+      "name": "Wikipedia\n\nThe Free Encyclopedia",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 5
+    },
+    {
+      "name": "Wikipedia\n\n25 years of the free encyclopedia",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 5
+    },
+    {
+      "name": "Sorry to interrupt, but we're short on time to hit our goal.",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 3
+    },
+    {
+      "name": "wikipedia",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "readers",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "your",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "please",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "goal",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "give",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "years",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "still",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "internet",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "donate",
+      "description": "",
+      "pages": [
+        "https://www.wikipedia.org"
+      ],
+      "keywords": [],
+      "relevance": 1
+    }
+  ],
+  "entities": [
+    {
+      "name": "Wikipedia\n\nThe Free Encyclopedia",
+      "type": "Heading",
+      "description": "Primary page heading",
+      "properties": {}
+    },
+    {
+      "name": "Wikipedia\n\n25 years of the free encyclopedia",
+      "type": "Heading",
+      "description": "Primary page heading",
+      "properties": {}
+    }
+  ],
+  "qaPairs": [
+    {
+      "question": "What is Wikipedia\n\nThe Free Encyclopedia?",
+      "answer": "An important update for readers in the United States.",
+      "sourcePage": "https://www.wikipedia.org"
+    },
+    {
+      "question": "What is Wikipedia\n\n25 years of the free encyclopedia?",
+      "answer": "An important update for readers in the United States.",
+      "sourcePage": "https://www.wikipedia.org"
+    },
+    {
+      "question": "What is Sorry to interrupt, but we're short on time to hit our goal.?",
+      "answer": "An important update for readers in the United States.",
+      "sourcePage": "https://www.wikipedia.org"
+    }
+  ],
+  "structuredData": {
+    "version": "1.0",
+    "generatedAt": "2026-02-13T16:19:17.616Z",
+    "stats": {
+      "totalPages": 1,
+      "totalHeadings": 3,
+      "totalParagraphs": 9,
+      "totalImages": 1,
+      "totalLinks": 0
+    },
+    "siteStructure": {
+      "totalPages": 1,
+      "orphanPages": 1,
+      "brokenLinks": 0
+    },
+    "schema": {
+      "typesFound": 0,
+      "missingTypes": 3,
+      "richResults": 0
+    }
+  },
+  "generatedAt": 1770999557616
+}

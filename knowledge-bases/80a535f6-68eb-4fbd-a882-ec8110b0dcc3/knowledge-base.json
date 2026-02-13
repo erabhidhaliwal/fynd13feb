@@ -1,0 +1,143 @@
+{
+  "siteSummary": {
+    "name": "Example Domain",
+    "description": "This domain is for use in documentation examples without needing permission. Avoid use in operations.",
+    "industry": "General",
+    "primaryPurpose": "Information & Services",
+    "targetAudience": [
+      "Developers",
+      "IT Professionals"
+    ],
+    "keyValueProps": [],
+    "brandVoice": "Professional & Informative"
+  },
+  "topics": [
+    {
+      "name": "Example Domain",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 5
+    },
+    {
+      "name": "domain",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "example",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "documentation",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "examples",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "without",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "needing",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "permission",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "avoid",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    },
+    {
+      "name": "operations",
+      "description": "",
+      "pages": [
+        "https://example.com"
+      ],
+      "keywords": [],
+      "relevance": 1
+    }
+  ],
+  "entities": [
+    {
+      "name": "Example Domain",
+      "type": "Heading",
+      "description": "Primary page heading",
+      "properties": {}
+    }
+  ],
+  "qaPairs": [
+    {
+      "question": "What is Example Domain?",
+      "answer": "This domain is for use in documentation examples without needing permission. Avoid use in operations.",
+      "sourcePage": "https://example.com"
+    }
+  ],
+  "structuredData": {
+    "version": "1.0",
+    "generatedAt": "2026-02-13T16:18:13.934Z",
+    "stats": {
+      "totalPages": 1,
+      "totalHeadings": 1,
+      "totalParagraphs": 1,
+      "totalImages": 0,
+      "totalLinks": 1
+    },
+    "siteStructure": {
+      "totalPages": 1,
+      "orphanPages": 1,
+      "brokenLinks": 0
+    },
+    "schema": {
+      "typesFound": 0,
+      "missingTypes": 3,
+      "richResults": 0
+    }
+  },
+  "generatedAt": 1770999493934
+}

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fynd AI - Phase 1: Multi-Agent Crawler</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+      min-height: 100vh;
+      color: #e4e4e7;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      color: #a1a1aa;
+      font-size: 1.1rem;
+    }
+
+    .phase-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"], input[type="password"] {
+      flex: 1;
+      min-width: 280px;
+      padding: 14px 18px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #00d4ff;
+    }
+
+    input::placeholder {
+      color: #71717a;
+    }
+
+    button {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .agents-progress {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .agent-card {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+
+    .agent-card.active {
+      opacity: 1;
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .agent-card.completed {
+      opacity: 1;
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .agent-icon {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    .agent-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .agent-status {
+      font-size: 0.75rem;
+      color: #a1a1aa;
+    }
+
+    .progress-bar-container {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: 10px;
+      color: #a1a1aa;
+      font-size: 0.9rem;
+    }
+
+    #results-container {
+      display: none;
+    }
+
+    .results-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .results-header h2 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #10b981, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #a1a1aa;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .info-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: #71717a;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tag {
+      background: rgba(0, 212, 255, 0.15);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: #00d4ff;
+    }
+
+    .topics-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .topic-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topic-name {
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .topic-relevance {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .gap-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gap-info h4 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .gap-info p {
+      font-size: 0.8rem;
+      color: #a1a1aa;
+    }
+
+    .gap-importance {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .gap-importance.high {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .gap-importance.medium {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    .gap-importance.low {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .qa-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .qa-question {
+      font-weight: 600;
+      color: #00d4ff;
+      margin-bottom: 8px;
+    }
+
+    .qa-answer {
+      color: #a1a1aa;
+      font-size: 0.95rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      padding: 14px;
+      color: #fca5a5;
+      margin-top: 16px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: #a1a1aa;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      color: #fff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 16px;
+      }
+
+      .logo {
+        font-size: 2rem;
+      }
+
+      .input-group {
+        flex-direction: column;
+      }
+
+      input[type="text"], input[type="password"] {
+        min-width: 100%;
+      }
+
+      .agents-progress {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">Fynd AI</div>
+      <p class="tagline">Phase 1: Multi-Agent Website Crawler</p>
+      <div class="phase-badge">ALPHA</div>
+    </header>
+
+    <div class="card" id="input-card">
+      <h2 class="card-title">Analyze Your Website</h2>
+      <div class="input-group">
+        <input type="text" id="website-url" placeholder="Enter website URL (e.g., https://example.com)">
+        <button class="btn-primary" id="start-btn" onclick="startAnalysis()">Start Analysis</button>
+      </div>
+      <p style="margin-top: 12px; color: #71717a; font-size: 0.85rem;">
+        Our multi-agent system will crawl your website and generate a comprehensive AI-readable knowledge base.
+      </p>
+    </div>
+
+    <div class="card" id="progress-card" style="display: none;">
+      <h2 class="card-title">Analysis Progress</h2>
+      
+      <div class="agents-progress">
+        <div class="agent-card" id="agent-crawler">
+          <div class="agent-icon">🕷️</div>
+          <div class="agent-name">CrawlerAgent</div>
+          <div class="agent-status">Crawling pages...</div>
+        </div>
+        <div class="agent-card" id="agent-content">
+          <div class="agent-icon">📄</div>
+          <div class="agent-name">ContentExtractor</div>
+          <div class="agent-status">Extracting content...</div>
+        </div>
+        <div class="agent-card" id="agent-link">
+          <div class="agent-icon">🔗</div>
+          <div class="agent-name">LinkMapper</div>
+          <div class="agent-status">Mapping links...</div>
+        </div>
+        <div class="agent-card" id="agent-schema">
+          <div class="agent-icon">📊</div>
+          <div class="agent-name">SchemaAnalyzer</div>
+          <div class="agent-status">Analyzing schema...</div>
+        </div>
+        <div class="agent-card" id="agent-kb">
+          <div class="agent-icon">🧠</div>
+          <div class="agent-name">KBGenerator</div>
+          <div class="agent-status">Building knowledge base...</div>
+        </div>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="progress-text" id="progress-text">Initializing...</p>
+      </div>
+    </div>
+
+    <div id="results-container">
+      <div class="results-header">
+        <h2>✅ Analysis Complete!</h2>
+        <p style="color: #a1a1aa;">Your AI-readable knowledge base has been generated</p>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">📊 Overview</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-pages">0</div>
+            <div class="stat-label">Pages Crawled</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-topics">0</div>
+            <div class="stat-label">Topics</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-entities">0</div>
+            <div class="stat-label">Entities</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-qa">0</div>
+            <div class="stat-label">Q&A Pairs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-gaps">0</div>
+            <div class="stat-label">Schema Gaps</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-duration">0s</div>
+            <div class="stat-label">Duration</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">🏢 Site Summary</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Site Name</div>
+            <div class="info-value" id="site-name">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Industry</div>
+            <div class="info-value" id="site-industry">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Primary Purpose</div>
+            <div class="info-value" id="site-purpose">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Brand Voice</div>
+            <div class="info-value" id="site-voice">-</div>
+          </div>
+          <div class="info-item" style="grid-column: 1 / -1;">
+            <div class="info-label">Target Audience</div>
+            <div class="tags" id="site-audience"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="showTab('topics')">Topics</button>
+          <button class="tab" onclick="showTab('gaps')">Schema Gaps</button>
+          <button class="tab" onclick="showTab('qa')">Q&A Pairs</button>
+          <button class="tab" onclick="showTab('structure')">Site Structure</button>
+        </div>
+
+        <div class="tab-content active" id="tab-topics">
+          <h3 class="section-title">📚 Key Topics Detected</h3>
+          <div class="topics-list" id="topics-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-gaps">
+          <h3 class="section-title">⚠️ Schema Optimization Opportunities</h3>
+          <div id="gaps-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-qa">
+          <h3 class="section-title">❓ Generated Q&A Pairs</h3>
+          <div id="qa-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-structure">
+          <h3 class="section-title">🗺️ Site Structure Analysis</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="structure-pages">0</div>
+              <div class="stat-label">Total Pages</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="structure-orphans">0</div>
+              <div class="stat-label">Orphan Pages</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="structure-broken">0</div>
+              <div class="stat-label">Broken Links</div>
+            </div>
+          </div>
+          <div id="structure-list" style="margin-top: 20px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">📤 Export Knowledge Base</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn-primary" onclick="downloadJSON()">Download JSON</button>
+          <button class="btn-primary" style="background: rgba(255,255,255,0.1);" onclick="viewRaw()">View Raw Data</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-container"></div>
+  </div>
+
+  <script>
+    let currentWorkflowId = null;
+    let pollInterval = null;
+    let currentData = null;
+
+    async function startAnalysis() {
+      const url = document.getElementById('website-url').value.trim();
+      const btn = document.getElementById('start-btn');
+
+      if (!url) {
+        showError('Please enter a website URL');
+        return;
+      }
+
+      try {
+        new URL(url);
+      } catch {
+        showError('Please enter a valid URL (e.g., https://example.com)');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Starting...';
+      hideError();
+      document.getElementById('results-container').style.display = 'none';
+      document.getElementById('progress-card').style.display = 'block';
+      document.querySelector('.progress-bar-container').style.display = 'block';
+
+      try {
+        const response = await fetch('/api/phase1/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to start analysis');
+        }
+
+        currentWorkflowId = data.workflowId;
+        updateProgress(0, 'Starting crawl...');
+        
+        pollInterval = setInterval(() => checkStatus(), 2000);
+
+      } catch (error) {
+        showError(error.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Start Analysis';
+      }
+    }
+
+    async function checkStatus() {
+      if (!currentWorkflowId) return;
+
+      try {
+        const response = await fetch(`/api/phase1/${currentWorkflowId}`);
+        const workflow = await response.json();
+
+        if (workflow.status === 'running') {
+          updateAgentStatus(workflow.data);
+        } else if (workflow.status === 'completed') {
+          clearInterval(pollInterval);
+          currentData = workflow;
+          showResults(workflow);
+        } else if (workflow.status === 'error') {
+          clearInterval(pollInterval);
+          showError('Analysis failed. Please try again.');
+          resetUI();
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }
+
+    function updateAgentStatus(data) {
+      const agents = ['crawler', 'content', 'link', 'schema', 'kb'];
+      const steps = ['Crawling pages...', 'Extracting content...', 'Mapping links...', 'Analyzing schema...', 'Building knowledge base...'];
+      
+      let currentStep = 0;
+      if (data.crawlResult) currentStep = 1;
+      if (data.extractedContent) currentStep = 2;
+      if (data.linkMap) currentStep = 3;
+      if (data.schemaAnalysis) currentStep = 4;
+      if (data.knowledgeBase) currentStep = 5;
+
+      agents.forEach((agent, i) => {
+        const el = document.getElementById(`agent-${agent}`);
+        el.classList.remove('active', 'completed');
+        if (i < currentStep) {
+          el.classList.add('completed');
+        } else if (i === currentStep) {
+          el.classList.add('active');
+        }
+      });
+
+      const progress = (currentStep / 5) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+      
+      if (currentStep < 5) {
+        updateProgress(progress, steps[currentStep]);
+      }
+    }
+
+    function updateProgress(percent, text) {
+      document.getElementById('progress-fill').style.width = `${percent}%`;
+      document.getElementById('progress-text').textContent = text;
+    }
+
+    function showResults(workflow) {
+      const data = workflow.data;
+      const kb = data.knowledgeBase || {};
+      const summary = kb.siteSummary || {};
+      const crawl = data.crawlResult || {};
+      const linkMap = data.linkMap || {};
+      const schema = data.schemaAnalysis || {};
+
+      document.getElementById('progress-card').style.display = 'none';
+      document.getElementById('results-container').style.display = 'block';
+      document.getElementById('start-btn').disabled = false;
+      document.getElementById('start-btn').innerHTML = 'Start Analysis';
+
+      // Stats
+      document.getElementById('stat-pages').textContent = crawl.totalPages || 0;
+      document.getElementById('stat-topics').textContent = kb.topics?.length || 0;
+      document.getElementById('stat-entities').textContent = kb.entities?.length || 0;
+      document.getElementById('stat-qa').textContent = kb.qaPairs?.length || 0;
+      document.getElementById('stat-gaps').textContent = schema.gaps?.length || 0;
+      document.getElementById('stat-duration').textContent = Math.round((crawl.duration || 0) / 1000) + 's';
+
+      // Site Summary
+      document.getElementById('site-name').textContent = summary.name || '-';
+      document.getElementById('site-industry').textContent = summary.industry || '-';
+      document.getElementById('site-purpose').textContent = summary.primaryPurpose || '-';
+      document.getElementById('site-voice').textContent = summary.brandVoice || '-';
+
+      const audienceEl = document.getElementById('site-audience');
+      audienceEl.innerHTML = '';
+      (summary.targetAudience || []).forEach(a => {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = a;
+        audienceEl.appendChild(tag);
+      });
+
+      // Topics
+      const topicsList = document.getElementById('topics-list');
+      topicsList.innerHTML = '';
+      (kb.topics || []).slice(0, 20).forEach(topic => {
+        const item = document.createElement('div');
+        item.className = 'topic-item';
+        item.innerHTML = `
+          <span class="topic-name">${topic.name}</span>
+          <span class="topic-relevance">${topic.relevance}</span>
+        `;
+        topicsList.appendChild(item);
+      });
+
+      // Schema Gaps
+      const gapsList = document.getElementById('gaps-list');
+      gapsList.innerHTML = '';
+      (schema.gaps || []).forEach(gap => {
+        const item = document.createElement('div');
+        item.className = 'gap-item';
+        item.innerHTML = `
+          <div class="gap-info">
+            <h4>${gap.type}</h4>
+            <p>${gap.reason}</p>
+          </div>
+          <span class="gap-importance ${gap.importance}">${gap.importance.toUpperCase()}</span>
+        `;
+        gapsList.appendChild(item);
+      });
+
+      // Q&A Pairs
+      const qaList = document.getElementById('qa-list');
+      qaList.innerHTML = '';
+      (kb.qaPairs || []).slice(0, 10).forEach(qa => {
+        const item = document.createElement('div');
+        item.className = 'qa-item';
+        item.innerHTML = `
+          <div class="qa-question">Q: ${qa.question}</div>
+          <div class="qa-answer">A: ${qa.answer}</div>
+        `;
+        qaList.appendChild(item);
+      });
+
+      // Site Structure
+      document.getElementById('structure-pages').textContent = linkMap.siteStructure?.length || 0;
+      document.getElementById('structure-orphans').textContent = linkMap.orphanPages?.length || 0;
+      document.getElementById('structure-broken').textContent = linkMap.brokenLinks?.length || 0;
+
+      const structureList = document.getElementById('structure-list');
+      structureList.innerHTML = '';
+      (linkMap.siteStructure || []).slice(0, 10).forEach(page => {
+        const item = document.createElement('div');
+        item.className = 'topic-item';
+        item.innerHTML = `
+          <span class="topic-name" style="font-size: 0.85rem;">${page.title || page.url}</span>
+          <span style="color: #a1a1aa; font-size: 0.8rem;">Depth: ${page.depth}</span>
+        `;
+        structureList.appendChild(item);
+      });
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    function downloadJSON() {
+      if (!currentWorkflowId) return;
+      
+      fetch(`/api/phase1/${currentWorkflowId}/knowledge-base`)
+        .then(r => r.json())
+        .then(data => {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `knowledge-base-${currentWorkflowId}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+    }
+
+    function viewRaw() {
+      if (!currentWorkflowId) return;
+      window.open(`/api/phase1/${currentWorkflowId}/knowledge-base`, '_blank');
+    }
+
+    function showError(message) {
+      document.getElementById('error-container').innerHTML = 
+        `<div class="error-message">${message}</div>`;
+    }
+
+    function hideError() {
+      document.getElementById('error-container').innerHTML = '';
+    }
+
+    function resetUI() {
+      document.getElementById('start-btn').disabled = false;
+      document.getElementById('start-btn').innerHTML = 'Start Analysis';
+      document.getElementById('progress-card').style.display = 'none';
+    }
+
+    document.getElementById('website-url').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') startAnalysis();
+    });
+  </script>
+</body>
+</html>

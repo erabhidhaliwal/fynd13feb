@@ -1,0 +1,17 @@
+{
+  "siteName": "Talwar Jewellery House",
+  "industry": "SaaS/Software",
+  "primaryPurpose": "Sales",
+  "targetAudience": [
+    "Developers",
+    "Business Owners",
+    "Marketing Professionals",
+    "IT Professionals",
+    "Consumers",
+    "Healthcare Providers"
+  ],
+  "topicsCount": 30,
+  "entitiesCount": 25,
+  "qaPairsCount": 84,
+  "generatedAt": "2026-02-13T16:42:49.783Z"
+}

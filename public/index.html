@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fynd AI - GEO Workflow</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #e4e4e7;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .logo {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .tagline {
+      color: #a1a1aa;
+      font-size: 1.2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"], input[type="password"] {
+      flex: 1;
+      min-width: 250px;
+      padding: 15px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #00d4ff;
+    }
+
+    input::placeholder {
+      color: #71717a;
+    }
+
+    button {
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .workflow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .step {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+
+    .step.active {
+      opacity: 1;
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .step.completed {
+      opacity: 1;
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .step-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .step-status {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+    }
+
+    #progress-container {
+      display: none;
+    }
+
+    #progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    #progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    #progress-text {
+      text-align: center;
+      margin-top: 10px;
+      color: #a1a1aa;
+    }
+
+    #result-container {
+      display: none;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      margin-top: 5px;
+    }
+
+    .pages-list {
+      display: grid;
+      gap: 15px;
+    }
+
+    .page-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .page-item:hover {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .page-title {
+      font-weight: 600;
+    }
+
+    .page-score {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .middleware-section {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .code-block {
+      background: #0d1117;
+      border-radius: 10px;
+      padding: 20px;
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+
+    .code-block pre {
+      color: #c9d1d9;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+    }
+
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      margin-left: 10px;
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      padding: 15px;
+      color: #fca5a5;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background: #1e1e2e;
+      margin: 50px auto;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 900px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #a1a1aa;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .markdown-content {
+      line-height: 1.8;
+    }
+
+    .markdown-content h1 { font-size: 1.8rem; margin: 20px 0 10px; }
+    .markdown-content h2 { font-size: 1.4rem; margin: 15px 0 10px; }
+    .markdown-content h3 { font-size: 1.2rem; margin: 10px 0; }
+    .markdown-content p { margin: 10px 0; }
+    .markdown-content ul, .markdown-content ol { margin: 10px 0; padding-left: 25px; }
+    .markdown-content li { margin: 5px 0; }
+    .markdown-content code {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+    }
+    .markdown-content pre {
+      background: #0d1117;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">Fynd AI</div>
+      <p class="tagline">GEO Workflow - Optimize Your Site for AI Citation</p>
+    </header>
+
+    <div class="card">
+      <h2>Start New Analysis</h2>
+      <div class="input-group">
+        <input type="text" id="website-url" placeholder="Enter website URL (e.g., https://example.com)">
+        <input type="password" id="api-key" placeholder="OpenAI API Key (optional)">
+        <button class="btn-primary" id="start-btn" onclick="startWorkflow()">Start Analysis</button>
+      </div>
+      <p style="margin-top: 15px; color: #71717a; font-size: 0.9rem;">
+        Without an API key, the system will use simulation mode. Add your OpenAI key for real LLM queries.
+      </p>
+    </div>
+
+    <div id="progress-container" class="card">
+      <h2>Analysis Progress</h2>
+      <div class="workflow-steps">
+        <div class="step" id="step-1">
+          <div class="step-icon">🕷️</div>
+          <div class="step-title">Crawling</div>
+          <div class="step-status">Converting site to Markdown</div>
+        </div>
+        <div class="step" id="step-2">
+          <div class="step-icon">🔍</div>
+          <div class="step-title">Querying</div>
+          <div class="step-status">Running 100+ LLM queries</div>
+        </div>
+        <div class="step" id="step-3">
+          <div class="step-icon">📊</div>
+          <div class="step-title">Analyzing</div>
+          <div class="step-status">Identifying citation gaps</div>
+        </div>
+        <div class="step" id="step-4">
+          <div class="step-icon">📝</div>
+          <div class="step-title">Generating</div>
+          <div class="step-status">Creating optimized pages</div>
+        </div>
+      </div>
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
+      <p id="progress-text">Initializing...</p>
+    </div>
+
+    <div id="error-container"></div>
+
+    <div id="result-container" class="card">
+      <h2>Analysis Complete!</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-pages">0</div>
+          <div class="stat-label">Pages Generated</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-queries">0</div>
+          <div class="stat-label">Queries Executed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-mentions">0%</div>
+          <div class="stat-label">Current Mention Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-gaps">0</div>
+          <div class="stat-label">Citation Gaps Found</div>
+        </div>
+      </div>
+
+      <h3>Generated Pages</h3>
+      <div class="pages-list" id="pages-list"></div>
+
+      <div class="middleware-section">
+        <div style="display: flex; align-items: center;">
+          <h3>AI Middleware</h3>
+          <button class="btn-copy" onclick="copyMiddleware()">Copy Code</button>
+        </div>
+        <p style="color: #a1a1aa; margin-top: 10px;">
+          Add this middleware to your server to serve optimized content only to AI bots.
+        </p>
+        <div class="code-block">
+          <pre id="middleware-code"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="page-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Page Content</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="markdown-content" id="modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentWorkflowId = null;
+    let pollInterval = null;
+
+    async function startWorkflow() {
+      const url = document.getElementById('website-url').value.trim();
+      const apiKey = document.getElementById('api-key').value.trim();
+      const btn = document.getElementById('start-btn');
+
+      if (!url) {
+        showError('Please enter a website URL');
+        return;
+      }
+
+      try {
+        new URL(url);
+      } catch {
+        showError('Please enter a valid URL (e.g., https://example.com)');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Starting...';
+      hideError();
+      document.getElementById('result-container').style.display = 'none';
+
+      const response = await fetch('/api/workflow/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, apiKey: apiKey || undefined })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showError(data.error || 'Failed to start workflow');
+        btn.disabled = false;
+        btn.innerHTML = 'Start Analysis';
+        return;
+      }
+
+      currentWorkflowId = data.workflowId;
+      document.getElementById('progress-container').style.display = 'block';
+      
+      pollInterval = setInterval(() => checkStatus(), 2000);
+      checkStatus();
+    }
+
+    async function checkStatus() {
+      if (!currentWorkflowId) return;
+
+      const response = await fetch(`/api/workflow/${currentWorkflowId}`);
+      const workflow = await response.json();
+
+      updateProgress(workflow.status);
+
+      if (workflow.status === 'completed') {
+        clearInterval(pollInterval);
+        showResults(workflow);
+      } else if (workflow.status === 'error') {
+        clearInterval(pollInterval);
+        showError('Workflow failed. Please try again.');
+        resetUI();
+      }
+    }
+
+    function updateProgress(status) {
+      const steps = ['crawling', 'querying', 'analyzing', 'generating'];
+      const stepIndex = steps.indexOf(status);
+      
+      const stepElements = document.querySelectorAll('.step');
+      stepElements.forEach((el, i) => {
+        el.classList.remove('active', 'completed');
+        if (i < stepIndex) {
+          el.classList.add('completed');
+        } else if (i === stepIndex) {
+          el.classList.add('active');
+        }
+      });
+
+      const progress = ((stepIndex + 1) / steps.length) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+      
+      const statusTexts = {
+        'crawling': 'Crawling website and converting to Markdown...',
+        'querying': 'Running 100+ queries on LLM to check citations...',
+        'analyzing': 'Analyzing citation gaps between you and competitors...',
+        'generating': 'Generating optimized pages for AI citation...',
+        'completed': 'Analysis complete!'
+      };
+      document.getElementById('progress-text').textContent = statusTexts[status] || 'Processing...';
+    }
+
+    async function showResults(workflow) {
+      document.getElementById('progress-container').style.display = 'none';
+      document.getElementById('result-container').style.display = 'block';
+      document.getElementById('start-btn').disabled = false;
+      document.getElementById('start-btn').innerHTML = 'Start Analysis';
+
+      const pagesResponse = await fetch(`/api/workflow/${currentWorkflowId}/pages`);
+      const pagesData = await pagesResponse.json();
+
+      document.getElementById('stat-pages').textContent = pagesData.pages.length;
+      document.getElementById('stat-queries').textContent = workflow.queryResults?.length || 0;
+      document.getElementById('stat-mentions').textContent = 
+        `${Math.round((workflow.queryResults?.filter(r => r.yourSiteMentioned).length || 0) / Math.max(workflow.queryResults?.length || 1, 1) * 100)}%`;
+      document.getElementById('stat-gaps').textContent = workflow.citationsGaps?.length || 0;
+
+      const pagesList = document.getElementById('pages-list');
+      pagesList.innerHTML = '';
+
+      for (const page of pagesData.pages) {
+        const pageResponse = await fetch(`/api/workflow/${currentWorkflowId}/page/${page.fileName}`);
+        const pageContent = await pageResponse.text();
+
+        const item = document.createElement('div');
+        item.className = 'page-item';
+        item.onclick = () => showPageModal(page.title, pageContent);
+        item.innerHTML = `
+          <span class="page-title">${page.title}</span>
+          <span class="page-score">${Math.round(page.opportunityScore * 100)}%</span>
+        `;
+        pagesList.appendChild(item);
+      }
+
+      const middlewareResponse = await fetch(`/api/workflow/${currentWorkflowId}/middleware`);
+      const middlewareCode = await middlewareResponse.text();
+      document.getElementById('middleware-code').textContent = middlewareCode;
+    }
+
+    function showPageModal(title, content) {
+      document.getElementById('modal-title').textContent = title;
+      
+      let html = content
+        .replace(/^```(\w+)?\n([\s\S]*?)```$/gm, '<pre><code>$2</code></pre>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^\- (.+)$/gm, '<li>$1</li>')
+        .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^---$/gm, '<hr>');
+
+      html = '<p>' + html + '</p>';
+      html = html.replace(/<p><\/p>/g, '');
+      
+      document.getElementById('modal-content').innerHTML = html;
+      document.getElementById('page-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('page-modal').style.display = 'none';
+    }
+
+    async function copyMiddleware() {
+      const code = document.getElementById('middleware-code').textContent;
+      await navigator.clipboard.writeText(code);
+      alert('Middleware code copied to clipboard!');
+    }
+
+    function showError(message) {
+      document.getElementById('error-container').innerHTML = 
+        `<div class="error-message">${message}</div>`;
+    }
+
+    function hideError() {
+      document.getElementById('error-container').innerHTML = '';
+    }
+
+    function resetUI() {
+      document.getElementById('start-btn').disabled = false;
+      document.getElementById('start-btn').innerHTML = 'Start Analysis';
+    }
+
+    document.getElementById('website-url').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') startWorkflow();
+    });
+
+    window.onclick = (e) => {
+      if (e.target === document.getElementById('page-modal')) {
+        closeModal();
+      }
+    };
+  </script>
+</body>
+</html>
