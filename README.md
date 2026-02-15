@@ -241,6 +241,103 @@ GET /api/phase2/knowledge-bases/:id/phase2-results
 
 ---
 
+## Phase 3: Citation Gap Analysis
+
+Phase 3 identifies where competitors are being cited instead of you and provides actionable recommendations.
+
+### Overview
+
+After Phase 2 identifies citation rates, Phase 3:
+1. Analyzes gaps by query category (comparison, reviews, pricing, etc.)
+2. Identifies which competitors are outranking you
+3. Detects missing topics and content gaps
+4. Calculates opportunity scores for each gap
+5. Generates actionable recommendations
+
+### Gap Types
+
+| Gap Type | Description | Priority |
+|----------|-------------|----------|
+| Category Gap | Low citation rate in specific query category | Based on opportunity score |
+| Competitor Gap | Competitor consistently outranking you | High if frequent |
+| Content Gap | Missing topic coverage | Medium-High |
+| Schema Gap | Missing structured data | Low-Medium |
+
+### Output
+
+Results are saved to `knowledge-bases/{id}/phase3-results.json`:
+
+```json
+{
+  "id": "xxx",
+  "knowledgeBaseId": "xxx",
+  "gaps": [
+    {
+      "category": "comparison",
+      "query": "Low citation rate in comparison queries",
+      "competitors": ["HubSpot", "Salesforce"],
+      "missingTopics": ["comparison", "versus", "alternative"],
+      "opportunityScore": 0.85,
+      "priority": "high",
+      "recommendation": "Create comparison pages with key competitors",
+      "suggestedContent": "Create 'Your Site vs HubSpot' comparison page..."
+    }
+  ],
+  "stats": {
+    "totalGaps": 15,
+    "highPriorityGaps": 5,
+    "mediumPriorityGaps": 7,
+    "lowPriorityGaps": 3,
+    "avgOpportunityScore": 0.65,
+    "topCompetitors": ["HubSpot", "Salesforce", "Zapier"],
+    "categoriesAffected": ["comparison", "reviews", "pricing"],
+    "estimatedImpact": 97
+  },
+  "recommendations": [
+    "Address 5 high-priority gaps immediately for maximum impact.",
+    "Create comparison content with top competitors: HubSpot, Salesforce.",
+    "Improve pricing transparency and create detailed plan comparisons."
+  ]
+}
+```
+
+### Opportunity Score Calculation
+
+The opportunity score (0-1) is calculated based on:
+- **Coverage Gap** (50%): How often your site is NOT mentioned
+- **Competition Factor** (30%): Number of competitors appearing
+- **Volume Score** (20%): Number of queries affected
+
+Priority levels:
+- **High**: Score >= 0.7
+- **Medium**: Score >= 0.4
+- **Low**: Score < 0.4
+
+### API Endpoints
+
+```bash
+# List knowledge bases with Phase 3 status
+GET /api/phase3/knowledge-bases
+
+# Start gap analysis
+POST /api/phase3/start
+{"knowledgeBaseId": "xxx", "phase2WorkflowId": "xxx"}
+
+# Get workflow status
+GET /api/phase3/:id
+
+# Get gap analysis results
+GET /api/phase3/:id/results
+
+# Export results
+GET /api/phase3/:id/export
+
+# Get existing Phase 3 results for a KB
+GET /api/phase3/knowledge-bases/:id/phase3-results
+```
+
+---
+
 ## Complete GEO Workflow (Phases 3-4)
 
 After Phase 1 creates the knowledge base, the remaining phases optimize for AI citation.
@@ -352,6 +449,29 @@ GET /api/phase2/:id/export
 
 # Get Phase 2 results for a knowledge base
 GET /api/phase2/knowledge-bases/:id/phase2-results
+```
+
+### Phase 3 (Gap Analysis)
+
+```bash
+# List knowledge bases with Phase 3 status
+GET /api/phase3/knowledge-bases
+
+# Start gap analysis
+POST /api/phase3/start
+{"knowledgeBaseId": "xxx", "phase2WorkflowId": "xxx"}
+
+# Get workflow status
+GET /api/phase3/:id
+
+# Get gap analysis results
+GET /api/phase3/:id/results
+
+# Export results as JSON
+GET /api/phase3/:id/export
+
+# Get Phase 3 results for a knowledge base
+GET /api/phase3/knowledge-bases/:id/phase3-results
 ```
 
 ### Original Workflow
@@ -538,7 +658,8 @@ fynd-ai/
 │   │   │   └── knowledge-base-generator.ts    # KB Generator
 │   │   ├── services/
 │   │   │   ├── phase1-orchestrator.ts         # Phase 1 workflow
-│   │   │   └── phase2-orchestrator.ts         # Phase 2 workflow
+│   │   │   ├── phase2-orchestrator.ts         # Phase 2 workflow
+│   │   │   └── phase3-orchestrator.ts         # Phase 3 workflow
 │   │   ├── types/
 │   │   │   └── index.ts                       # TypeScript interfaces
 │   │   └── server.ts                          # API server
@@ -579,9 +700,9 @@ fynd-ai/
 
 ### Completed
 - [x] Phase 2: LLM Query Integration (OpenAI API + Mock mode)
+- [x] Phase 3: Citation Gap Analysis
 
 ### Planned
-- [ ] Phase 3: Advanced Gap Analysis
 - [ ] Phase 4: Page Generation
 - [ ] Docker Support
 - [ ] Cloud Deployment Scripts

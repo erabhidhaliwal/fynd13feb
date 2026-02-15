@@ -2,6 +2,7 @@ import express from 'express';
 import { WorkflowManager } from '../services/workflow-manager.js';
 import { Phase1Orchestrator } from '../multi-agent/services/phase1-orchestrator.js';
 import { Phase2Orchestrator } from '../multi-agent/services/phase2-orchestrator.js';
+import { Phase3Orchestrator } from '../multi-agent/services/phase3-orchestrator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 const workflowManager = new WorkflowManager();
 const phase1Orchestrator = new Phase1Orchestrator();
 const phase2Orchestrator = new Phase2Orchestrator();
+const phase3Orchestrator = new Phase3Orchestrator();
 const outputDir = process.env.OUTPUT_DIR || './generated-pages';
 workflowManager.setOutputDirectory(outputDir);
 
@@ -300,6 +302,72 @@ app.get('/api/phase2/knowledge-bases/:id/phase2-results', (req, res) => {
   res.json(JSON.parse(fs.readFileSync(resultsPath, 'utf-8')));
 });
 
+// Phase 3 API Endpoints
+app.get('/api/phase3/knowledge-bases', (req, res) => {
+  const kbDir = path.join(process.cwd(), 'knowledge-bases');
+  if (!fs.existsSync(kbDir)) return res.json({ knowledgeBases: [] });
+  
+  const dirs = fs.readdirSync(kbDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => {
+      const summaryPath = path.join(kbDir, dirent.name, 'summary.json');
+      let summary = null;
+      if (fs.existsSync(summaryPath)) {
+        summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+      }
+      const phase2Path = path.join(kbDir, dirent.name, 'phase2-results.json');
+      const phase3Path = path.join(kbDir, dirent.name, 'phase3-results.json');
+      return { 
+        id: dirent.name, 
+        summary, 
+        hasPhase2: fs.existsSync(phase2Path),
+        hasPhase3: fs.existsSync(phase3Path)
+      };
+    });
+  res.json({ knowledgeBases: dirs });
+});
+
+app.post('/api/phase3/start', async (req, res) => {
+  try {
+    const { knowledgeBaseId, phase2WorkflowId } = req.body;
+    if (!knowledgeBaseId) return res.status(400).json({ error: 'Knowledge base ID is required' });
+    
+    const workflowId = await phase3Orchestrator.startGapAnalysis(knowledgeBaseId, phase2WorkflowId);
+    phase3Orchestrator.addListener(workflowId, (event, data) => {
+      console.log(`[Phase3 API] ${event}:`, data);
+    });
+    res.json({ workflowId, message: 'Phase 3 gap analysis started' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/phase3/:id', (req, res) => {
+  const workflow = phase3Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json(workflow);
+});
+
+app.get('/api/phase3/:id/results', (req, res) => {
+  const workflow = phase3Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json({ gaps: workflow.gaps, stats: workflow.stats, recommendations: workflow.recommendations });
+});
+
+app.get('/api/phase3/:id/export', (req, res) => {
+  const workflow = phase3Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="phase3-results-${req.params.id}.json"`);
+  res.send(JSON.stringify(workflow, null, 2));
+});
+
+app.get('/api/phase3/knowledge-bases/:id/phase3-results', (req, res) => {
+  const resultsPath = path.join(process.cwd(), 'knowledge-bases', req.params.id, 'phase3-results.json');
+  if (!fs.existsSync(resultsPath)) return res.status(404).json({ error: 'Phase 3 results not found' });
+  res.json(JSON.parse(fs.readFileSync(resultsPath, 'utf-8')));
+});
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
@@ -319,6 +387,11 @@ app.listen(PORT, () => {
 ║   POST /api/phase2/start - Start query analysis              ║
 ║   GET  /api/phase2/:id - Get workflow status                 ║
 ║   GET  /api/phase2/:id/results - Get results                 ║
+║                                                              ║
+║   Phase 3 API:                                               ║
+║   POST /api/phase3/start - Start gap analysis                ║
+║   GET  /api/phase3/:id - Get workflow status                 ║
+║   GET  /api/phase3/:id/results - Get gap analysis results    ║
 ╚════════════════════════════════════════════════════════════╝
   `);
 });

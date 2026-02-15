@@ -739,6 +739,10 @@
           <span class="phase-indicator">2</span>
           Phase 2: LLM Query Analysis
         </button>
+        <button class="phase-nav-btn" id="nav-phase3" onclick="switchPhase('phase3')">
+          <span class="phase-indicator">3</span>
+          Phase 3: Gap Analysis
+        </button>
       </div>
     </header>
 
@@ -1027,16 +1031,117 @@
       </div>
     </div>
 
+    <!-- Phase 3 Section -->
+    <div class="phase-container" id="phase3-container">
+      <div class="card" id="phase3-input-card">
+        <h2 class="card-title">Gap Analysis</h2>
+        <p style="margin-bottom: 16px; color: #a1a1aa; font-size: 0.9rem;">
+          Analyze citation gaps and identify optimization opportunities.
+        </p>
+        
+        <div class="input-group" style="margin-bottom: 12px;">
+          <select id="phase3-kb-select">
+            <option value="">Select a knowledge base...</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <button class="btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);" id="phase3-start-btn" onclick="startPhase3()">Run Gap Analysis</button>
+        </div>
+      </div>
+
+      <div class="card" id="phase3-progress-card" style="display: none;">
+        <h2 class="card-title">Phase 3 Progress</h2>
+        
+        <div class="progress-bar">
+          <div class="progress-fill" id="phase3-progress-fill" style="background: linear-gradient(90deg, #10b981, #059669);"></div>
+        </div>
+        <p class="progress-text" id="phase3-progress-text">Analyzing citation gaps...</p>
+      </div>
+
+      <div id="phase3-results-container" style="display: none;">
+        <div class="results-header">
+          <h2 style="background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Phase 3 Complete!
+          </h2>
+          <p style="color: #a1a1aa;">Citation gaps identified. Review opportunities below.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Summary</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="p3-stat-total" style="background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+              <div class="stat-label">Total Gaps</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p3-stat-high" style="background: linear-gradient(135deg, #ef4444, #dc2626); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+              <div class="stat-label">High Priority</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p3-stat-medium" style="background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+              <div class="stat-label">Medium Priority</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p3-stat-score" style="background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0%</div>
+              <div class="stat-label">Avg Opportunity</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tabs">
+            <button class="tab active" onclick="showTab('gaps-all', 'phase3')">All Gaps</button>
+            <button class="tab" onclick="showTab('gaps-high', 'phase3')">High Priority</button>
+            <button class="tab" onclick="showTab('recommendations', 'phase3')">Recommendations</button>
+            <button class="tab" onclick="showTab('competitors-p3', 'phase3')">Competitors</button>
+          </div>
+
+          <div class="tab-content active" id="tab-gaps-all">
+            <h3 class="section-title">Identified Citation Gaps</h3>
+            <div id="gaps-all-list"></div>
+          </div>
+
+          <div class="tab-content" id="tab-gaps-high">
+            <h3 class="section-title">High Priority Gaps</h3>
+            <p style="color: #a1a1aa; font-size: 0.9rem; margin-bottom: 16px;">These gaps have the highest opportunity scores and should be addressed first.</p>
+            <div id="gaps-high-list"></div>
+          </div>
+
+          <div class="tab-content" id="tab-recommendations">
+            <h3 class="section-title">Actionable Recommendations</h3>
+            <div id="recommendations-list"></div>
+          </div>
+
+          <div class="tab-content" id="tab-competitors-p3">
+            <h3 class="section-title">Top Competitors Outranking You</h3>
+            <div id="competitors-p3-list"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Export Results</h3>
+          <div class="workflow-actions">
+            <button class="btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="downloadPhase3JSON()">Download JSON</button>
+            <button class="btn-secondary" onclick="viewPhase3Raw()">View Raw Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="error-container"></div>
   </div>
 
   <script>
     let phase1WorkflowId = null;
     let phase2WorkflowId = null;
+    let phase3WorkflowId = null;
     let phase1PollInterval = null;
     let phase2PollInterval = null;
+    let phase3PollInterval = null;
     let phase1Data = null;
     let phase2Data = null;
+    let phase3Data = null;
 
     function switchPhase(phase) {
       document.querySelectorAll('.phase-container').forEach(p => p.classList.remove('active'));
@@ -1047,6 +1152,9 @@
       
       if (phase === 'phase2') {
         loadKnowledgeBases();
+      }
+      if (phase === 'phase3') {
+        loadPhase3KnowledgeBases();
       }
     }
 
@@ -1465,7 +1573,7 @@
     }
 
     function showTab(tabName, phase) {
-      const container = phase === 'phase2' ? 'phase2-container' : 'phase1-container';
+      const container = phase === 'phase2' ? 'phase2-container' : (phase === 'phase3' ? 'phase3-container' : 'phase1-container');
       document.querySelectorAll(`#${container} .tab`).forEach(t => t.classList.remove('active'));
       document.querySelectorAll(`#${container} .tab-content`).forEach(t => t.classList.remove('active'));
       
@@ -1522,6 +1630,210 @@
       document.getElementById('phase2-start-btn').disabled = false;
       document.getElementById('phase2-start-btn').innerHTML = 'Run Analysis';
       document.getElementById('phase2-progress-card').style.display = 'none';
+    }
+
+    // Phase 3 Functions
+    async function loadPhase3KnowledgeBases() {
+      try {
+        const response = await fetch('/api/phase3/knowledge-bases');
+        const data = await response.json();
+        
+        const select = document.getElementById('phase3-kb-select');
+        select.innerHTML = '<option value="">Select a knowledge base...</option>';
+        
+        data.knowledgeBases.forEach(kb => {
+          if (kb.summary) {
+            const option = document.createElement('option');
+            option.value = kb.id;
+            option.textContent = `${kb.summary.siteName || 'Unknown'} - ${kb.summary.industry || 'Unknown'}`;
+            if (kb.hasPhase2) option.textContent += ' (has Phase 2)';
+            if (kb.hasPhase3) option.textContent += ' (has Phase 3)';
+            if (kb.id === phase1WorkflowId) option.selected = true;
+            select.appendChild(option);
+          }
+        });
+        
+        if (data.knowledgeBases.length === 0) {
+          select.innerHTML = '<option value="">No knowledge bases found. Run Phase 1 first.</option>';
+        }
+      } catch (error) {
+        console.error('Error loading knowledge bases:', error);
+      }
+    }
+
+    async function startPhase3() {
+      const kbId = document.getElementById('phase3-kb-select').value;
+      const btn = document.getElementById('phase3-start-btn');
+
+      if (!kbId) {
+        showError('Please select a knowledge base');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Starting...';
+      hideError();
+      document.getElementById('phase3-results-container').style.display = 'none';
+      document.getElementById('phase3-progress-card').style.display = 'block';
+
+      try {
+        const response = await fetch('/api/phase3/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ knowledgeBaseId: kbId, phase2WorkflowId: phase2WorkflowId })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to start analysis');
+        }
+
+        phase3WorkflowId = data.workflowId;
+        document.getElementById('phase3-progress-text').textContent = 'Analyzing citation gaps...';
+        
+        phase3PollInterval = setInterval(() => checkPhase3Status(), 2000);
+
+      } catch (error) {
+        showError(error.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Run Gap Analysis';
+      }
+    }
+
+    async function checkPhase3Status() {
+      if (!phase3WorkflowId) return;
+
+      try {
+        const response = await fetch(`/api/phase3/${phase3WorkflowId}`);
+        const workflow = await response.json();
+
+        if (workflow.status === 'running') {
+          document.getElementById('phase3-progress-fill').style.width = '50%';
+          document.getElementById('phase3-progress-text').textContent = 'Analyzing gaps...';
+        } else if (workflow.status === 'completed') {
+          clearInterval(phase3PollInterval);
+          phase3Data = workflow;
+          showPhase3Results(workflow);
+          document.getElementById('nav-phase3').classList.add('completed');
+        } else if (workflow.status === 'error') {
+          clearInterval(phase3PollInterval);
+          showError('Analysis failed. Please try again.');
+          resetPhase3UI();
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }
+
+    function showPhase3Results(workflow) {
+      const stats = workflow.stats;
+      const gaps = workflow.gaps || [];
+      const recommendations = workflow.recommendations || [];
+
+      document.getElementById('phase3-progress-card').style.display = 'none';
+      document.getElementById('phase3-results-container').style.display = 'block';
+      document.getElementById('phase3-start-btn').disabled = false;
+      document.getElementById('phase3-start-btn').innerHTML = 'Run Gap Analysis';
+
+      document.getElementById('p3-stat-total').textContent = stats.totalGaps || 0;
+      document.getElementById('p3-stat-high').textContent = stats.highPriorityGaps || 0;
+      document.getElementById('p3-stat-medium').textContent = stats.mediumPriorityGaps || 0;
+      document.getElementById('p3-stat-score').textContent = `${Math.round((stats.avgOpportunityScore || 0) * 100)}%`;
+
+      renderGapsList('gaps-all-list', gaps);
+      renderGapsList('gaps-high-list', gaps.filter(g => g.priority === 'high'));
+      renderRecommendationsList(recommendations);
+      renderCompetitorsP3List(stats.topCompetitors || [], gaps);
+    }
+
+    function renderGapsList(containerId, gaps) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      if (gaps.length === 0) {
+        container.innerHTML = '<p style="color: #71717a; padding: 20px; text-align: center;">No gaps in this category</p>';
+        return;
+      }
+
+      gaps.forEach(gap => {
+        const item = document.createElement('div');
+        item.className = 'gap-item';
+        item.innerHTML = `
+          <div class="gap-info">
+            <h4>${gap.query}</h4>
+            <p style="font-size: 0.8rem; color: #a1a1aa; margin-top: 4px;">${gap.recommendation}</p>
+            ${gap.competitors?.length > 0 ? `<p style="font-size: 0.75rem; color: #f59e0b; margin-top: 4px;">Competitors: ${gap.competitors.slice(0, 3).join(', ')}</p>` : ''}
+          </div>
+          <span class="gap-importance ${gap.priority}">${gap.priority.toUpperCase()}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderRecommendationsList(recommendations) {
+      const container = document.getElementById('recommendations-list');
+      container.innerHTML = '';
+
+      if (recommendations.length === 0) {
+        container.innerHTML = '<p style="color: #71717a; padding: 20px; text-align: center;">No recommendations available</p>';
+        return;
+      }
+
+      recommendations.forEach((rec, i) => {
+        const item = document.createElement('div');
+        item.className = 'qa-item';
+        item.innerHTML = `
+          <div class="qa-question">${i + 1}. ${rec}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderCompetitorsP3List(competitors, gaps) {
+      const container = document.getElementById('competitors-p3-list');
+      container.innerHTML = '';
+
+      if (competitors.length === 0) {
+        container.innerHTML = '<p style="color: #71717a; padding: 20px; text-align: center;">No competitors identified</p>';
+        return;
+      }
+
+      const counts = {};
+      gaps.forEach(g => {
+        g.competitors?.forEach(c => {
+          counts[c] = (counts[c] || 0) + 1;
+        });
+      });
+
+      competitors.forEach(comp => {
+        const item = document.createElement('div');
+        item.className = 'competitor-card';
+        item.innerHTML = `<div class="competitor-name">${comp}</div><div class="competitor-count">${counts[comp] || 0} gaps</div>`;
+        container.appendChild(item);
+      });
+    }
+
+    function downloadPhase3JSON() {
+      if (!phase3WorkflowId || !phase3Data) return;
+      const blob = new Blob([JSON.stringify(phase3Data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `phase3-results-${phase3WorkflowId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function viewPhase3Raw() {
+      if (!phase3WorkflowId) return;
+      window.open(`/api/phase3/${phase3WorkflowId}/results`, '_blank');
+    }
+
+    function resetPhase3UI() {
+      document.getElementById('phase3-start-btn').disabled = false;
+      document.getElementById('phase3-start-btn').innerHTML = 'Run Gap Analysis';
+      document.getElementById('phase3-progress-card').style.display = 'none';
     }
 
     document.getElementById('website-url').addEventListener('keypress', (e) => {
