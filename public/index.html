@@ -775,6 +775,10 @@
             <span class="step-number">4</span>
             Generate
           </button>
+          <button class="nav-btn" id="nav-phase5" onclick="switchPhase('phase5')">
+            <span class="step-number">5</span>
+            Monitor
+          </button>
         </nav>
       </div>
     </div>
@@ -1287,6 +1291,149 @@
         </div>
       </div>
 
+      <!-- Phase 5 -->
+      <div class="phase-container" id="phase5-container">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Citation Monitoring</h2>
+            <p class="card-description">Track your citation rate over time, monitor competitor movements, and get alerts when your visibility changes. Run periodic checks to measure the impact of your optimizations.</p>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Select Knowledge Base</label>
+            <select id="phase5-kb-select">
+              <option value="">Loading knowledge bases...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">OpenAI API Key (Optional)</label>
+            <input type="password" id="phase5-api-key" placeholder="sk-... (uses mock data if not provided)">
+            <p style="font-size: 0.85rem; color: var(--gray-500); margin-top: 8px;">
+              With an API key, monitoring will use real LLM responses.
+            </p>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-primary" id="phase5-start-btn" onclick="startPhase5()" style="background: #059669;">Run Citation Check</button>
+            <button class="btn btn-secondary" id="phase5-history-btn" onclick="loadPhase5History()">View History</button>
+          </div>
+        </div>
+
+        <div class="card progress-section" id="phase5-progress-card">
+          <div class="progress-header">
+            <span class="progress-title">Running citation check...</span>
+            <span class="progress-percentage" id="phase5-progress-percentage">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="phase5-progress-fill" style="background: linear-gradient(90deg, #059669, #10b981);"></div>
+          </div>
+          <div class="stats-grid" style="margin-top: 16px;">
+            <div class="stat-card">
+              <div class="stat-value" id="p5-queries-current">0/0</div>
+              <div class="stat-label">Queries</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p5-mentions-current">0</div>
+              <div class="stat-label">Mentions</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="phase5-results-container" style="display: none;">
+          <div class="results-header" style="background: linear-gradient(135deg, #ecfdf5, #d1fae5);">
+            <h2>✓ Citation Check Complete</h2>
+            <p>Monitor your citation performance over time</p>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Current Snapshot</h3>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value" id="p5-stat-queries" style="color: #059669;">0</div>
+                <div class="stat-label">Total Queries</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="p5-stat-mentions" style="color: #059669;">0</div>
+                <div class="stat-label">Mentions</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="p5-stat-rate" style="color: #059669;">0%</div>
+                <div class="stat-label">Mention Rate</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="p5-stat-competitors" style="color: #059669;">0</div>
+                <div class="stat-label">Competitors</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="phase5-trend-card" style="display: none;">
+            <h3 class="card-title">Trend Analysis</h3>
+            <div id="trend-indicator" style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;"></div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value" id="p5-trend-change">-</div>
+                <div class="stat-label">Change</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="p5-trend-direction">-</div>
+                <div class="stat-label">Direction</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="p5-trend-avg">-</div>
+                <div class="stat-label">Avg Rate</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="p5-trend-days">-</div>
+                <div class="stat-label">Days Tracked</div>
+              </div>
+            </div>
+            <div id="trend-insights" style="margin-top: 16px;"></div>
+          </div>
+
+          <div class="card">
+            <div class="tabs-wrapper">
+              <div class="tabs">
+                <button class="tab active" onclick="showTab('category-stats', 'phase5')">By Category</button>
+                <button class="tab" onclick="showTab('top-competitors', 'phase5')">Competitors</button>
+                <button class="tab" onclick="showTab('movements', 'phase5')">Movements</button>
+                <button class="tab" onclick="showTab('alerts', 'phase5')">Alerts</button>
+                <button class="tab" onclick="showTab('history', 'phase5')">History</button>
+              </div>
+            </div>
+
+            <div class="tab-content active" id="tab-category-stats">
+              <div id="category-stats-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-top-competitors">
+              <div id="top-competitors-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-movements">
+              <div class="data-list" id="movements-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-alerts">
+              <div class="data-list" id="alerts-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-history">
+              <div class="data-list" id="history-list"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Export & Schedule</h3>
+            <div class="action-buttons">
+              <button class="btn btn-primary" style="background: #059669;" onclick="downloadPhase5JSON()">Download Report</button>
+              <button class="btn btn-secondary" onclick="schedulePhase5Monitoring()">Schedule Monitoring</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="error-container"></div>
     </div>
   </main>
@@ -1304,6 +1451,9 @@
     let phase2Data = null;
     let phase3Data = null;
     let phase4Data = null;
+    let phase5WorkflowId = null;
+    let phase5PollInterval = null;
+    let phase5Data = null;
 
     function switchPhase(phase) {
       document.querySelectorAll('.phase-container').forEach(p => p.classList.remove('active'));
@@ -1315,6 +1465,7 @@
       if (phase === 'phase2') loadKnowledgeBases();
       if (phase === 'phase3') loadPhase3KnowledgeBases();
       if (phase === 'phase4') loadPhase4KnowledgeBases();
+      if (phase === 'phase5') loadPhase5KnowledgeBases();
     }
 
     async function startPhase1() {
@@ -2098,6 +2249,344 @@
     document.getElementById('website-url').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') startPhase1();
     });
+
+    // Phase 5 Functions
+    async function loadPhase5KnowledgeBases() {
+      try {
+        const response = await fetch('/api/phase5/knowledge-bases');
+        const data = await response.json();
+        
+        const select = document.getElementById('phase5-kb-select');
+        select.innerHTML = '<option value="">Select a knowledge base...</option>';
+        
+        data.knowledgeBases.forEach(kb => {
+          if (kb.summary) {
+            const option = document.createElement('option');
+            option.value = kb.id;
+            option.textContent = `${kb.summary.siteName || 'Unknown'} - ${kb.summary.industry || 'Unknown'}`;
+            if (kb.hasPhase4) option.textContent += ' ✓P4';
+            if (kb.hasPhase5) option.textContent += ' ✓P5';
+            if (kb.hasHistory) option.textContent += ' 📊';
+            if (kb.id === phase1WorkflowId) option.selected = true;
+            select.appendChild(option);
+          }
+        });
+      } catch (error) {
+        console.error('Error loading knowledge bases:', error);
+      }
+    }
+
+    async function startPhase5() {
+      const kbId = document.getElementById('phase5-kb-select').value;
+      const apiKey = document.getElementById('phase5-api-key').value.trim();
+      const btn = document.getElementById('phase5-start-btn');
+
+      if (!kbId) {
+        showError('Please select a knowledge base');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Starting...';
+      hideError();
+      document.getElementById('phase5-results-container').style.display = 'none';
+      document.getElementById('phase5-progress-card').style.display = 'block';
+
+      try {
+        const response = await fetch('/api/phase5/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ knowledgeBaseId: kbId, apiKey: apiKey || undefined })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to start monitoring');
+
+        phase5WorkflowId = data.workflowId;
+        updatePhase5Progress(0, 0, 0);
+        phase5PollInterval = setInterval(() => checkPhase5Status(), 2000);
+      } catch (error) {
+        showError(error.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Run Citation Check';
+      }
+    }
+
+    async function checkPhase5Status() {
+      if (!phase5WorkflowId) return;
+
+      try {
+        const response = await fetch(`/api/phase5/${phase5WorkflowId}`);
+        const workflow = await response.json();
+
+        if (workflow.status === 'running') {
+          const snapshot = workflow.currentSnapshot;
+          if (snapshot) {
+            updatePhase5Progress(snapshot.mentionCount || 0, snapshot.totalQueries || 0, snapshot.mentionCount || 0);
+          }
+        } else if (workflow.status === 'completed') {
+          clearInterval(phase5PollInterval);
+          phase5Data = workflow;
+          showPhase5Results(workflow);
+          document.getElementById('nav-phase5').classList.add('completed');
+        } else if (workflow.status === 'error') {
+          clearInterval(phase5PollInterval);
+          showError('Monitoring failed. Please try again.');
+          resetPhase5UI();
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }
+
+    function updatePhase5Progress(mentions, completed, total) {
+      const percent = total > 0 ? (completed / total) * 100 : 0;
+      document.getElementById('phase5-progress-fill').style.width = `${percent}%`;
+      document.getElementById('phase5-progress-percentage').textContent = `${Math.round(percent)}%`;
+      document.getElementById('p5-queries-current').textContent = `${completed}/${total}`;
+      document.getElementById('p5-mentions-current').textContent = mentions;
+    }
+
+    function showPhase5Results(workflow) {
+      const snapshot = workflow.currentSnapshot || {};
+      const stats = workflow.stats || {};
+      const trend = workflow.trend;
+      const movements = workflow.competitorMovements || [];
+      const alerts = workflow.alerts || [];
+      const history = workflow.history || [];
+
+      document.getElementById('phase5-progress-card').style.display = 'none';
+      document.getElementById('phase5-results-container').style.display = 'block';
+      document.getElementById('phase5-start-btn').disabled = false;
+      document.getElementById('phase5-start-btn').innerHTML = 'Run Citation Check';
+
+      document.getElementById('p5-stat-queries').textContent = snapshot.totalQueries || 0;
+      document.getElementById('p5-stat-mentions').textContent = snapshot.mentionCount || 0;
+      document.getElementById('p5-stat-rate').textContent = `${(snapshot.mentionPercentage || 0).toFixed(1)}%`;
+      document.getElementById('p5-stat-competitors').textContent = (snapshot.topCompetitors || []).length;
+
+      if (trend) {
+        document.getElementById('phase5-trend-card').style.display = 'block';
+        
+        const directionIcon = trend.direction === 'improving' ? '📈' : trend.direction === 'declining' ? '📉' : '➡️';
+        const directionColor = trend.direction === 'improving' ? 'var(--success)' : trend.direction === 'declining' ? 'var(--danger)' : 'var(--gray-500)';
+        
+        document.getElementById('trend-indicator').innerHTML = `
+          <span style="font-size: 2rem;">${directionIcon}</span>
+          <div>
+            <div style="font-size: 1.25rem; font-weight: 600; color: ${directionColor};">
+              ${trend.direction.charAt(0).toUpperCase() + trend.direction.slice(1)}
+            </div>
+            <div style="color: var(--gray-500);">Since last check</div>
+          </div>
+        `;
+        
+        document.getElementById('p5-trend-change').textContent = `${trend.changePercentage >= 0 ? '+' : ''}${trend.changePercentage.toFixed(1)}%`;
+        document.getElementById('p5-trend-direction').textContent = trend.direction;
+        document.getElementById('p5-trend-avg').textContent = `${(stats.avgMentionRate || 0).toFixed(1)}%`;
+        document.getElementById('p5-trend-days').textContent = stats.daysTracked || 0;
+        
+        const insightsEl = document.getElementById('trend-insights');
+        insightsEl.innerHTML = '';
+        (trend.insights || []).forEach(insight => {
+          const p = document.createElement('p');
+          p.style.cssText = 'color: var(--gray-600); font-size: 0.9rem; margin-bottom: 8px;';
+          p.textContent = `• ${insight}`;
+          insightsEl.appendChild(p);
+        });
+      }
+
+      renderCategoryStats(snapshot.categoryStats || {});
+      renderTopCompetitors(snapshot.topCompetitors || []);
+      renderMovements(movements);
+      renderAlerts(alerts);
+      renderHistory(history);
+    }
+
+    function renderCategoryStats(categoryStats) {
+      const container = document.getElementById('category-stats-list');
+      container.innerHTML = '';
+
+      if (Object.keys(categoryStats).length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No category data available</p></div>';
+        return;
+      }
+
+      Object.entries(categoryStats).forEach(([category, stats]) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: flex; align-items: center; margin-bottom: 12px;';
+        row.innerHTML = `
+          <div style="width: 140px; font-size: 0.9rem; color: var(--gray-600);">${category}</div>
+          <div style="flex: 1; height: 24px; background: var(--gray-200); border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; width: ${stats.percentage}%; background: linear-gradient(90deg, #059669, #10b981); border-radius: 4px;"></div>
+          </div>
+          <div style="width: 100px; text-align: right; font-size: 0.9rem; color: var(--gray-700);">${stats.mentions}/${stats.total} (${stats.percentage.toFixed(0)}%)</div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderTopCompetitors(competitors) {
+      const container = document.getElementById('top-competitors-list');
+      container.innerHTML = '';
+
+      if (competitors.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏆</div><p>No competitors detected</p></div>';
+        return;
+      }
+
+      competitors.forEach((comp, i) => {
+        const item = document.createElement('div');
+        item.className = 'data-item';
+        item.innerHTML = `
+          <div class="data-item-title">
+            <span style="color: var(--gray-400); margin-right: 8px;">#${i + 1}</span>
+            ${comp.name}
+          </div>
+          <div class="data-item-meta">
+            <span class="tag tag-warning">${comp.count} mentions</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderMovements(movements) {
+      const container = document.getElementById('movements-list');
+      container.innerHTML = '';
+
+      if (movements.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No competitor movements detected</p></div>';
+        return;
+      }
+
+      movements.forEach(m => {
+        const item = document.createElement('div');
+        const isUp = m.change === 'up';
+        const isDown = m.change === 'down';
+        item.className = `data-item ${isDown ? 'danger' : isUp ? 'success' : ''}`;
+        
+        const arrow = isUp ? '⬆️' : isDown ? '⬇️' : '➡️';
+        const changeText = m.mentionChange >= 0 ? `+${m.mentionChange}` : m.mentionChange;
+        
+        item.innerHTML = `
+          <div class="data-item-title">${arrow} ${m.competitor}</div>
+          <div class="data-item-content">
+            Rank: ${m.currentRank > 0 ? `#${m.currentRank}` : 'N/A'} | 
+            Change: ${changeText} mentions
+          </div>
+          <div class="data-item-meta">
+            <span class="tag ${isDown ? 'tag-danger' : isUp ? 'tag-success' : 'tag-primary'}">
+              ${m.change.toUpperCase()}
+            </span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderAlerts(alerts) {
+      const container = document.getElementById('alerts-list');
+      container.innerHTML = '';
+
+      if (alerts.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No alerts</p></div>';
+        return;
+      }
+
+      alerts.forEach(alert => {
+        const item = document.createElement('div');
+        item.className = `data-item ${alert.type === 'warning' ? 'warning' : alert.type === 'success' ? 'success' : ''}`;
+        item.innerHTML = `
+          <div class="data-item-content">${alert.message}</div>
+          <div class="data-item-meta">
+            <span class="tag tag-${alert.type === 'warning' ? 'warning' : alert.type === 'success' ? 'success' : 'primary'}">
+              ${alert.type.toUpperCase()}
+            </span>
+            <span style="font-size: 0.8rem; color: var(--gray-400);">${new Date(alert.timestamp).toLocaleString()}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderHistory(history) {
+      const container = document.getElementById('history-list');
+      container.innerHTML = '';
+
+      if (history.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No history yet. Run your first check!</p></div>';
+        return;
+      }
+
+      history.slice().reverse().forEach((snap, i) => {
+        const item = document.createElement('div');
+        item.className = 'data-item';
+        const date = new Date(snap.timestamp).toLocaleDateString();
+        const time = new Date(snap.timestamp).toLocaleTimeString();
+        
+        item.innerHTML = `
+          <div class="data-item-title">${date} ${time}</div>
+          <div class="data-item-content">
+            ${snap.mentionCount}/${snap.totalQueries} mentions (${snap.mentionPercentage.toFixed(1)}%)
+          </div>
+          <div class="data-item-meta">
+            <span class="tag tag-primary">${snap.source}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function loadPhase5History() {
+      const kbId = document.getElementById('phase5-kb-select').value;
+      if (!kbId) {
+        showError('Please select a knowledge base');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/phase5/knowledge-bases/${kbId}/history`);
+        const data = await response.json();
+        
+        if (data.history && data.history.length > 0) {
+          document.getElementById('phase5-results-container').style.display = 'block';
+          document.getElementById('phase5-trend-card').style.display = 'none';
+          renderHistory(data.history);
+          showTab('history', 'phase5');
+        } else {
+          showError('No history found. Run a citation check first.');
+        }
+      } catch (error) {
+        showError('Failed to load history');
+      }
+    }
+
+    function downloadPhase5JSON() {
+      if (!phase5WorkflowId || !phase5Data) return;
+      const blob = new Blob([JSON.stringify(phase5Data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `phase5-results-${phase5WorkflowId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function schedulePhase5Monitoring() {
+      const kbId = document.getElementById('phase5-kb-select').value;
+      if (!kbId) {
+        showError('Please select a knowledge base');
+        return;
+      }
+      showError('Scheduled monitoring started. The system will check citations every 24 hours.');
+    }
+
+    function resetPhase5UI() {
+      document.getElementById('phase5-start-btn').disabled = false;
+      document.getElementById('phase5-start-btn').innerHTML = 'Run Citation Check';
+      document.getElementById('phase5-progress-card').style.display = 'none';
+    }
   </script>
 </body>
 </html>

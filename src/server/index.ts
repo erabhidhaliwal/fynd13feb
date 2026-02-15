@@ -4,6 +4,7 @@ import { Phase1Orchestrator } from '../multi-agent/services/phase1-orchestrator.
 import { Phase2Orchestrator } from '../multi-agent/services/phase2-orchestrator.js';
 import { Phase3Orchestrator } from '../multi-agent/services/phase3-orchestrator.js';
 import { Phase4Orchestrator } from '../multi-agent/services/phase4-orchestrator.js';
+import { Phase5Orchestrator } from '../multi-agent/services/phase5-orchestrator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,6 +17,7 @@ const phase1Orchestrator = new Phase1Orchestrator();
 const phase2Orchestrator = new Phase2Orchestrator();
 const phase3Orchestrator = new Phase3Orchestrator();
 const phase4Orchestrator = new Phase4Orchestrator();
+const phase5Orchestrator = new Phase5Orchestrator();
 const outputDir = process.env.OUTPUT_DIR || './generated-pages';
 workflowManager.setOutputDirectory(outputDir);
 
@@ -483,6 +485,113 @@ app.get('/api/phase4/knowledge-bases/:id/middleware', (req, res) => {
   res.send(fs.readFileSync(middlewarePath, 'utf-8'));
 });
 
+// Phase 5 API Endpoints
+app.get('/api/phase5/knowledge-bases', (req, res) => {
+  const kbDir = path.join(process.cwd(), 'knowledge-bases');
+  if (!fs.existsSync(kbDir)) return res.json({ knowledgeBases: [] });
+  
+  const dirs = fs.readdirSync(kbDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => {
+      const summaryPath = path.join(kbDir, dirent.name, 'summary.json');
+      let summary = null;
+      if (fs.existsSync(summaryPath)) {
+        summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+      }
+      const phase2Path = path.join(kbDir, dirent.name, 'phase2-results.json');
+      const phase3Path = path.join(kbDir, dirent.name, 'phase3-results.json');
+      const phase4Path = path.join(kbDir, dirent.name, 'phase4-results.json');
+      const phase5Path = path.join(kbDir, dirent.name, 'phase5-results.json');
+      const historyPath = path.join(kbDir, dirent.name, 'citation-history.json');
+      return { 
+        id: dirent.name, 
+        summary, 
+        hasPhase2: fs.existsSync(phase2Path),
+        hasPhase3: fs.existsSync(phase3Path),
+        hasPhase4: fs.existsSync(phase4Path),
+        hasPhase5: fs.existsSync(phase5Path),
+        hasHistory: fs.existsSync(historyPath)
+      };
+    });
+  res.json({ knowledgeBases: dirs });
+});
+
+app.post('/api/phase5/start', async (req, res) => {
+  try {
+    const { knowledgeBaseId, apiKey } = req.body;
+    if (!knowledgeBaseId) return res.status(400).json({ error: 'Knowledge base ID is required' });
+    
+    const workflowId = await phase5Orchestrator.startMonitoring(knowledgeBaseId, apiKey);
+    phase5Orchestrator.addListener(workflowId, (event, data) => {
+      console.log(`[Phase5 API] ${event}:`, data);
+    });
+    res.json({ workflowId, message: 'Phase 5 citation monitoring started' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/phase5/:id', (req, res) => {
+  const workflow = phase5Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json(workflow);
+});
+
+app.get('/api/phase5/:id/results', (req, res) => {
+  const workflow = phase5Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json({ 
+    currentSnapshot: workflow.currentSnapshot,
+    previousSnapshot: workflow.previousSnapshot,
+    trend: workflow.trend,
+    competitorMovements: workflow.competitorMovements,
+    alerts: workflow.alerts,
+    stats: workflow.stats
+  });
+});
+
+app.get('/api/phase5/:id/history', (req, res) => {
+  const workflow = phase5Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json({ history: workflow.history });
+});
+
+app.get('/api/phase5/:id/export', (req, res) => {
+  const workflow = phase5Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="phase5-results-${req.params.id}.json"`);
+  res.send(JSON.stringify(workflow, null, 2));
+});
+
+app.get('/api/phase5/knowledge-bases/:id/phase5-results', (req, res) => {
+  const resultsPath = path.join(process.cwd(), 'knowledge-bases', req.params.id, 'phase5-results.json');
+  if (!fs.existsSync(resultsPath)) return res.status(404).json({ error: 'Phase 5 results not found' });
+  res.json(JSON.parse(fs.readFileSync(resultsPath, 'utf-8')));
+});
+
+app.get('/api/phase5/knowledge-bases/:id/history', (req, res) => {
+  const history = phase5Orchestrator.getHistory(req.params.id);
+  res.json({ history });
+});
+
+app.post('/api/phase5/schedule', async (req, res) => {
+  try {
+    const { knowledgeBaseId, intervalHours, apiKey } = req.body;
+    if (!knowledgeBaseId) return res.status(400).json({ error: 'Knowledge base ID is required' });
+    
+    const workflowId = phase5Orchestrator.startScheduledMonitoring(knowledgeBaseId, intervalHours || 24, apiKey);
+    res.json({ workflowId, message: `Scheduled monitoring started (every ${intervalHours || 24} hours)` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/phase5/:id/schedule', (req, res) => {
+  phase5Orchestrator.stopScheduledMonitoring(req.params.id);
+  res.json({ message: 'Scheduled monitoring stopped' });
+});
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
@@ -503,9 +612,14 @@ app.listen(PORT, () => {
 ║   GET  /api/phase3/:id/results - Get gap analysis results    ║
 ║                                                              ║
 ║   Phase 4 API:                                               ║
-║   POST /api/phase4/start - Start page generation            ║
-║   GET  /api/phase4/:id/results - Get generated pages        ║
-║   GET  /api/phase4/:id/middleware - Get middleware code     ║
+║   POST /api/phase4/start - Start page generation             ║
+║   GET  /api/phase4/:id/results - Get generated pages         ║
+║   GET  /api/phase4/:id/middleware - Get middleware code      ║
+║                                                              ║
+║   Phase 5 API:                                               ║
+║   POST /api/phase5/start - Start citation monitoring         ║
+║   GET  /api/phase5/:id/results - Get monitoring results      ║
+║   GET  /api/phase5/:id/history - Get citation history        ║
 ╚════════════════════════════════════════════════════════════╝
   `);
 });

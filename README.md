@@ -8,12 +8,13 @@
 
 ## Overview
 
-Fynd-AI helps websites get cited in AI responses (ChatGPT, Claude, Gemini, etc.) through a comprehensive 4-phase workflow:
+Fynd-AI helps websites get cited in AI responses (ChatGPT, Claude, Gemini, etc.) through a comprehensive 5-phase workflow:
 
 1. **Phase 1**: Crawl & Understand - Multi-agent system that deeply analyzes your website
 2. **Phase 2**: Query Analysis - Run 100+ queries on LLMs to check citation status
 3. **Phase 3**: Gap Analysis - Identify where competitors are cited but you aren't
 4. **Phase 4**: Optimization - Generate optimized pages + AI bot middleware
+5. **Phase 5**: Monitoring - Track citation performance over time with alerts
 
 ## Architecture
 
@@ -481,6 +482,162 @@ app.listen(3000);
 
 ---
 
+## Phase 5: Citation Monitoring
+
+Phase 5 provides ongoing tracking of your citation performance, competitor movements, and trend analysis.
+
+### Overview
+
+After implementing optimizations, Phase 5:
+1. Runs periodic citation checks (manual or scheduled)
+2. Tracks mention rate changes over time
+3. Monitors competitor ranking movements
+4. Generates trend analysis with insights
+5. Provides alerts for significant changes
+
+### Key Features
+
+**Citation Snapshots:**
+- Total queries and mention counts
+- Mention rate by category
+- Top competitors detected
+- Source tracking (manual/scheduled/api)
+
+**Trend Analysis:**
+- Direction detection (improving/declining/stable)
+- Change percentage calculation
+- Category-specific insights
+- Actionable recommendations
+
+**Competitor Tracking:**
+- Ranking changes (up/down/stable)
+- Mention count changes
+- Historical comparison
+
+**Alerts:**
+- Citation rate drops
+- Significant improvements
+- Competitor movements
+- Error notifications
+
+### Output
+
+Results are saved to `knowledge-bases/{id}/phase5-results.json` and `knowledge-bases/{id}/citation-history.json`:
+
+```json
+{
+  "id": "xxx",
+  "knowledgeBaseId": "xxx",
+  "currentSnapshot": {
+    "timestamp": 1708000000000,
+    "totalQueries": 28,
+    "mentionCount": 18,
+    "mentionPercentage": 64.29,
+    "categoryStats": {
+      "general": { "total": 4, "mentions": 3, "percentage": 75 },
+      "comparison": { "total": 4, "mentions": 2, "percentage": 50 }
+    },
+    "topCompetitors": [
+      { "name": "HubSpot", "count": 8 },
+      { "name": "Salesforce", "count": 5 }
+    ],
+    "source": "manual"
+  },
+  "trend": {
+    "direction": "improving",
+    "changePercentage": 5.2,
+    "insights": [
+      "Citation rate has improved since last check.",
+      "Strong improvement in general queries (+12.5%)."
+    ],
+    "recommendations": [
+      "Continue current content strategy.",
+      "Monitor which categories improved most."
+    ]
+  },
+  "competitorMovements": [
+    {
+      "competitor": "HubSpot",
+      "previousRank": 1,
+      "currentRank": 1,
+      "change": "stable",
+      "mentionChange": -2
+    }
+  ],
+  "stats": {
+    "totalSnapshots": 5,
+    "avgMentionRate": 61.5,
+    "improvementRate": 8.3,
+    "daysTracked": 7
+  },
+  "alerts": [
+    {
+      "type": "success",
+      "message": "Citation rate improved by 5.2%",
+      "timestamp": 1708000000000
+    }
+  ]
+}
+```
+
+### API Endpoints
+
+```bash
+# List knowledge bases with Phase 5 status
+GET /api/phase5/knowledge-bases
+
+# Start citation monitoring
+POST /api/phase5/start
+{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}
+
+# Get workflow status
+GET /api/phase5/:id
+
+# Get monitoring results
+GET /api/phase5/:id/results
+
+# Get citation history
+GET /api/phase5/:id/history
+
+# Export results
+GET /api/phase5/:id/export
+
+# Get existing Phase 5 results for a KB
+GET /api/phase5/knowledge-bases/:id/phase5-results
+
+# Get history for a knowledge base
+GET /api/phase5/knowledge-bases/:id/history
+
+# Schedule periodic monitoring
+POST /api/phase5/schedule
+{"knowledgeBaseId": "xxx", "intervalHours": 24, "apiKey": "sk-..."}
+
+# Stop scheduled monitoring
+DELETE /api/phase5/:id/schedule
+```
+
+### Scheduled Monitoring
+
+Enable automatic citation checks:
+
+```javascript
+// Via API
+await fetch('/api/phase5/schedule', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    knowledgeBaseId: 'xxx',
+    intervalHours: 24,
+    apiKey: 'sk-...'
+  })
+});
+
+// Stops after ID
+await fetch('/api/phase5/{id}/schedule', { method: 'DELETE' });
+```
+
+---
+
 ## Complete GEO Workflow (Phases 3-4)
 
 After Phase 1 creates the knowledge base, the remaining phases optimize for AI citation.
@@ -650,6 +807,42 @@ GET /api/phase4/knowledge-bases/:id/pages/:fileName
 
 # Get middleware for deployment
 GET /api/phase4/knowledge-bases/:id/middleware
+```
+
+### Phase 5 (Citation Monitoring)
+
+```bash
+# List knowledge bases with Phase 5 status
+GET /api/phase5/knowledge-bases
+
+# Start citation monitoring
+POST /api/phase5/start
+{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}
+
+# Get workflow status
+GET /api/phase5/:id
+
+# Get monitoring results
+GET /api/phase5/:id/results
+
+# Get citation history
+GET /api/phase5/:id/history
+
+# Export results as JSON
+GET /api/phase5/:id/export
+
+# Get Phase 5 results for a KB
+GET /api/phase5/knowledge-bases/:id/phase5-results
+
+# Get history for a knowledge base
+GET /api/phase5/knowledge-bases/:id/history
+
+# Schedule periodic monitoring
+POST /api/phase5/schedule
+{"knowledgeBaseId": "xxx", "intervalHours": 24}
+
+# Stop scheduled monitoring
+DELETE /api/phase5/:id/schedule
 ```
 
 ### Original Workflow
@@ -838,7 +1031,8 @@ fynd-ai/
 │   │   │   ├── phase1-orchestrator.ts         # Phase 1 workflow
 │   │   │   ├── phase2-orchestrator.ts         # Phase 2 workflow
 │   │   │   ├── phase3-orchestrator.ts         # Phase 3 workflow
-│   │   │   └── phase4-orchestrator.ts         # Phase 4 workflow
+│   │   │   ├── phase4-orchestrator.ts         # Phase 4 workflow
+│   │   │   └── phase5-orchestrator.ts         # Phase 5 workflow
 │   │   ├── types/
 │   │   │   └── index.ts                       # TypeScript interfaces
 │   │   └── server.ts                          # API server
@@ -881,12 +1075,15 @@ fynd-ai/
 - [x] Phase 2: LLM Query Integration (OpenAI API + Mock mode)
 - [x] Phase 3: Citation Gap Analysis
 - [x] Phase 4: Page Generation & Middleware
+- [x] Phase 5: Citation Monitoring & Alerts
 
 ### Planned
 - [ ] Docker Support
 - [ ] Cloud Deployment Scripts
 - [ ] Dashboard Improvements
 - [ ] Export to Various Formats
+- [ ] Email Notifications for Alerts
+- [ ] Multi-language Support
 
 ---
 
