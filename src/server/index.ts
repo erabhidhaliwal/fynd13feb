@@ -3,6 +3,7 @@ import { WorkflowManager } from '../services/workflow-manager.js';
 import { Phase1Orchestrator } from '../multi-agent/services/phase1-orchestrator.js';
 import { Phase2Orchestrator } from '../multi-agent/services/phase2-orchestrator.js';
 import { Phase3Orchestrator } from '../multi-agent/services/phase3-orchestrator.js';
+import { Phase4Orchestrator } from '../multi-agent/services/phase4-orchestrator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,6 +15,7 @@ const workflowManager = new WorkflowManager();
 const phase1Orchestrator = new Phase1Orchestrator();
 const phase2Orchestrator = new Phase2Orchestrator();
 const phase3Orchestrator = new Phase3Orchestrator();
+const phase4Orchestrator = new Phase4Orchestrator();
 const outputDir = process.env.OUTPUT_DIR || './generated-pages';
 workflowManager.setOutputDirectory(outputDir);
 
@@ -368,30 +370,142 @@ app.get('/api/phase3/knowledge-bases/:id/phase3-results', (req, res) => {
   res.json(JSON.parse(fs.readFileSync(resultsPath, 'utf-8')));
 });
 
+// Phase 4 API Endpoints
+app.get('/api/phase4/knowledge-bases', (req, res) => {
+  const kbDir = path.join(process.cwd(), 'knowledge-bases');
+  if (!fs.existsSync(kbDir)) return res.json({ knowledgeBases: [] });
+  
+  const dirs = fs.readdirSync(kbDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => {
+      const summaryPath = path.join(kbDir, dirent.name, 'summary.json');
+      let summary = null;
+      if (fs.existsSync(summaryPath)) {
+        summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+      }
+      const phase2Path = path.join(kbDir, dirent.name, 'phase2-results.json');
+      const phase3Path = path.join(kbDir, dirent.name, 'phase3-results.json');
+      const phase4Path = path.join(kbDir, dirent.name, 'phase4-results.json');
+      const generatedPagesPath = path.join(process.cwd(), 'generated-pages', dirent.name);
+      return { 
+        id: dirent.name, 
+        summary, 
+        hasPhase2: fs.existsSync(phase2Path),
+        hasPhase3: fs.existsSync(phase3Path),
+        hasPhase4: fs.existsSync(phase4Path),
+        hasGeneratedPages: fs.existsSync(generatedPagesPath)
+      };
+    });
+  res.json({ knowledgeBases: dirs });
+});
+
+app.post('/api/phase4/start', async (req, res) => {
+  try {
+    const { knowledgeBaseId, phase3WorkflowId, apiKey } = req.body;
+    if (!knowledgeBaseId) return res.status(400).json({ error: 'Knowledge base ID is required' });
+    
+    const workflowId = await phase4Orchestrator.startPageGeneration(knowledgeBaseId, phase3WorkflowId, apiKey);
+    phase4Orchestrator.addListener(workflowId, (event, data) => {
+      console.log(`[Phase4 API] ${event}:`, data);
+    });
+    res.json({ workflowId, message: 'Phase 4 page generation started' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/phase4/:id', (req, res) => {
+  const workflow = phase4Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json(workflow);
+});
+
+app.get('/api/phase4/:id/results', (req, res) => {
+  const workflow = phase4Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json({ 
+    pages: workflow.pages, 
+    middleware: workflow.middleware, 
+    stats: workflow.stats 
+  });
+});
+
+app.get('/api/phase4/:id/export', (req, res) => {
+  const workflow = phase4Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="phase4-results-${req.params.id}.json"`);
+  res.send(JSON.stringify(workflow, null, 2));
+});
+
+app.get('/api/phase4/:id/pages', (req, res) => {
+  const workflow = phase4Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json({ pages: workflow.pages.map(p => ({ id: p.id, title: p.title, category: p.category, targetQuery: p.targetQuery, filePath: p.filePath })) });
+});
+
+app.get('/api/phase4/:id/middleware', (req, res) => {
+  const workflow = phase4Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(workflow.middleware.code);
+});
+
+app.get('/api/phase4/knowledge-bases/:id/pages', (req, res) => {
+  const pagesDir = path.join(process.cwd(), 'generated-pages', req.params.id);
+  if (!fs.existsSync(pagesDir)) return res.json({ pages: [] });
+  
+  const files = fs.readdirSync(pagesDir).filter(f => f.endsWith('.md'));
+  const pages = files.map(file => {
+    const content = fs.readFileSync(path.join(pagesDir, file), 'utf-8');
+    const titleMatch = content.match(/title: "([^"]+)"/);
+    const catMatch = content.match(/category: "([^"]+)"/);
+    return { 
+      fileName: file, 
+      title: titleMatch ? titleMatch[1] : file,
+      category: catMatch ? catMatch[1] : 'general'
+    };
+  });
+  res.json({ pages });
+});
+
+app.get('/api/phase4/knowledge-bases/:id/pages/:fileName', (req, res) => {
+  const filePath = path.join(process.cwd(), 'generated-pages', req.params.id, req.params.fileName);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Page not found' });
+  res.setHeader('Content-Type', 'text/markdown');
+  res.send(fs.readFileSync(filePath, 'utf-8'));
+});
+
+app.get('/api/phase4/knowledge-bases/:id/middleware', (req, res) => {
+  const middlewarePath = path.join(process.cwd(), 'generated-pages', req.params.id, 'middleware.js');
+  if (!fs.existsSync(middlewarePath)) return res.status(404).json({ error: 'Middleware not found' });
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(fs.readFileSync(middlewarePath, 'utf-8'));
+});
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║              Fynd AI - GEO Workflow System                    ║
 ║                                                              ║
 ║   Server: http://localhost:${PORT}                            ║
-║   Phase 1: http://localhost:${PORT}/phase1                    ║
-║   Phase 2: http://localhost:${PORT}/phase2                    ║
 ║                                                              ║
 ║   Phase 1 API:                                               ║
 ║   POST /api/phase1/start - Start website crawl               ║
 ║   GET  /api/phase1/:id - Get workflow status                 ║
-║   GET  /api/phase1/:id/knowledge-base - Get KB               ║
 ║                                                              ║
 ║   Phase 2 API:                                               ║
 ║   GET  /api/phase2/knowledge-bases - List knowledge bases    ║
 ║   POST /api/phase2/start - Start query analysis              ║
-║   GET  /api/phase2/:id - Get workflow status                 ║
-║   GET  /api/phase2/:id/results - Get results                 ║
 ║                                                              ║
 ║   Phase 3 API:                                               ║
 ║   POST /api/phase3/start - Start gap analysis                ║
-║   GET  /api/phase3/:id - Get workflow status                 ║
 ║   GET  /api/phase3/:id/results - Get gap analysis results    ║
+║                                                              ║
+║   Phase 4 API:                                               ║
+║   POST /api/phase4/start - Start page generation            ║
+║   GET  /api/phase4/:id/results - Get generated pages        ║
+║   GET  /api/phase4/:id/middleware - Get middleware code     ║
 ╚════════════════════════════════════════════════════════════╝
   `);
 });

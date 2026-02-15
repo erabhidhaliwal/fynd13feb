@@ -743,6 +743,10 @@
           <span class="phase-indicator">3</span>
           Phase 3: Gap Analysis
         </button>
+        <button class="phase-nav-btn" id="nav-phase4" onclick="switchPhase('phase4')">
+          <span class="phase-indicator">4</span>
+          Phase 4: Page Generation
+        </button>
       </div>
     </header>
 
@@ -1129,6 +1133,125 @@
       </div>
     </div>
 
+    <!-- Phase 4 Section -->
+    <div class="phase-container" id="phase4-container">
+      <div class="card" id="phase4-input-card">
+        <h2 class="card-title">Page Generation</h2>
+        <p style="margin-bottom: 16px; color: #a1a1aa; font-size: 0.9rem;">
+          Generate AI-optimized pages and middleware code to improve citation rates.
+        </p>
+        
+        <div class="input-group" style="margin-bottom: 12px;">
+          <select id="phase4-kb-select">
+            <option value="">Select a knowledge base...</option>
+          </select>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 12px;">
+          <input type="password" id="phase4-api-key" placeholder="OpenAI API Key (optional - uses templates if not provided)">
+        </div>
+        
+        <div class="input-group">
+          <button class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #6366f1);" id="phase4-start-btn" onclick="startPhase4()">Generate Pages</button>
+        </div>
+      </div>
+
+      <div class="card" id="phase4-progress-card" style="display: none;">
+        <h2 class="card-title">Phase 4 Progress</h2>
+        
+        <div class="progress-bar">
+          <div class="progress-fill" id="phase4-progress-fill" style="background: linear-gradient(90deg, #8b5cf6, #6366f1);"></div>
+        </div>
+        <p class="progress-text" id="phase4-progress-text">Generating optimized pages...</p>
+      </div>
+
+      <div id="phase4-results-container" style="display: none;">
+        <div class="results-header">
+          <h2 style="background: linear-gradient(135deg, #8b5cf6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Phase 4 Complete!
+          </h2>
+          <p style="color: #a1a1aa;">AI-optimized pages and middleware generated.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Summary</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="p4-stat-pages" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+              <div class="stat-label">Pages Generated</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p4-stat-categories" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+              <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p4-stat-competitors" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+              <div class="stat-label">Competitors Addressed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="p4-stat-score" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0%</div>
+              <div class="stat-label">Avg Opportunity</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tabs">
+            <button class="tab active" onclick="showTab('pages-all', 'phase4')">All Pages</button>
+            <button class="tab" onclick="showTab('middleware-view', 'phase4')">Middleware</button>
+            <button class="tab" onclick="showTab('implementation', 'phase4')">How to Use</button>
+          </div>
+
+          <div class="tab-content active" id="tab-pages-all">
+            <h3 class="section-title">Generated Pages</h3>
+            <div id="pages-all-list"></div>
+          </div>
+
+          <div class="tab-content" id="tab-middleware-view">
+            <h3 class="section-title">AI Bot Middleware</h3>
+            <p style="color: #a1a1aa; font-size: 0.9rem; margin-bottom: 16px;">
+              This middleware serves optimized content only to AI bots (ChatGPT, Claude, Gemini, etc.).
+            </p>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 16px; overflow-x: auto;">
+              <pre id="middleware-code-view" style="color: #a1a1aa; font-size: 0.8rem; white-space: pre-wrap;"></pre>
+            </div>
+            <div class="workflow-actions" style="margin-top: 16px;">
+              <button class="btn-secondary" onclick="copyMiddleware()">Copy Middleware</button>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-implementation">
+            <h3 class="section-title">Implementation Guide</h3>
+            <div class="qa-item">
+              <div class="qa-question">Step 1: Download Generated Files</div>
+              <div class="qa-answer">Click "Download All" to get all generated pages and middleware.</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-question">Step 2: Add Middleware to Your Server</div>
+              <div class="qa-answer">Copy middleware.js to your project and add it to Express: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">app.use(geoMiddleware())</code></div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-question">Step 3: Upload Generated Pages</div>
+              <div class="qa-answer">Place the .md files in your generated-pages directory.</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-question">Step 4: Test with AI Bots</div>
+              <div class="qa-answer">AI bots will automatically receive optimized content when crawling your site.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Export Results</h3>
+          <div class="workflow-actions">
+            <button class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #6366f1);" onclick="downloadPhase4JSON()">Download JSON</button>
+            <button class="btn-secondary" onclick="downloadMiddleware()">Download Middleware</button>
+            <button class="btn-secondary" onclick="viewPhase4Raw()">View Raw Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="error-container"></div>
   </div>
 
@@ -1136,12 +1259,15 @@
     let phase1WorkflowId = null;
     let phase2WorkflowId = null;
     let phase3WorkflowId = null;
+    let phase4WorkflowId = null;
     let phase1PollInterval = null;
     let phase2PollInterval = null;
     let phase3PollInterval = null;
+    let phase4PollInterval = null;
     let phase1Data = null;
     let phase2Data = null;
     let phase3Data = null;
+    let phase4Data = null;
 
     function switchPhase(phase) {
       document.querySelectorAll('.phase-container').forEach(p => p.classList.remove('active'));
@@ -1155,6 +1281,9 @@
       }
       if (phase === 'phase3') {
         loadPhase3KnowledgeBases();
+      }
+      if (phase === 'phase4') {
+        loadPhase4KnowledgeBases();
       }
     }
 
@@ -1834,6 +1963,184 @@
       document.getElementById('phase3-start-btn').disabled = false;
       document.getElementById('phase3-start-btn').innerHTML = 'Run Gap Analysis';
       document.getElementById('phase3-progress-card').style.display = 'none';
+    }
+
+    // Phase 4 Functions
+    async function loadPhase4KnowledgeBases() {
+      try {
+        const response = await fetch('/api/phase4/knowledge-bases');
+        const data = await response.json();
+        
+        const select = document.getElementById('phase4-kb-select');
+        select.innerHTML = '<option value="">Select a knowledge base...</option>';
+        
+        data.knowledgeBases.forEach(kb => {
+          if (kb.summary) {
+            const option = document.createElement('option');
+            option.value = kb.id;
+            option.textContent = `${kb.summary.siteName || 'Unknown'} - ${kb.summary.industry || 'Unknown'}`;
+            if (kb.hasPhase3) option.textContent += ' (has Phase 3)';
+            if (kb.hasPhase4) option.textContent += ' (has Phase 4)';
+            if (kb.id === phase1WorkflowId) option.selected = true;
+            select.appendChild(option);
+          }
+        });
+        
+        if (data.knowledgeBases.length === 0) {
+          select.innerHTML = '<option value="">No knowledge bases found. Run Phase 1 first.</option>';
+        }
+      } catch (error) {
+        console.error('Error loading knowledge bases:', error);
+      }
+    }
+
+    async function startPhase4() {
+      const kbId = document.getElementById('phase4-kb-select').value;
+      const apiKey = document.getElementById('phase4-api-key').value.trim();
+      const btn = document.getElementById('phase4-start-btn');
+
+      if (!kbId) {
+        showError('Please select a knowledge base');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Starting...';
+      hideError();
+      document.getElementById('phase4-results-container').style.display = 'none';
+      document.getElementById('phase4-progress-card').style.display = 'block';
+
+      try {
+        const response = await fetch('/api/phase4/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ knowledgeBaseId: kbId, phase3WorkflowId: phase3WorkflowId, apiKey: apiKey || undefined })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to start generation');
+        }
+
+        phase4WorkflowId = data.workflowId;
+        document.getElementById('phase4-progress-text').textContent = 'Generating pages...';
+        
+        phase4PollInterval = setInterval(() => checkPhase4Status(), 2000);
+
+      } catch (error) {
+        showError(error.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Generate Pages';
+      }
+    }
+
+    async function checkPhase4Status() {
+      if (!phase4WorkflowId) return;
+
+      try {
+        const response = await fetch(`/api/phase4/${phase4WorkflowId}`);
+        const workflow = await response.json();
+
+        if (workflow.status === 'running') {
+          document.getElementById('phase4-progress-fill').style.width = '50%';
+          document.getElementById('phase4-progress-text').textContent = 'Generating optimized pages...';
+        } else if (workflow.status === 'completed') {
+          clearInterval(phase4PollInterval);
+          phase4Data = workflow;
+          showPhase4Results(workflow);
+          document.getElementById('nav-phase4').classList.add('completed');
+        } else if (workflow.status === 'error') {
+          clearInterval(phase4PollInterval);
+          showError('Generation failed. Please try again.');
+          resetPhase4UI();
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }
+
+    function showPhase4Results(workflow) {
+      const stats = workflow.stats;
+      const pages = workflow.pages || [];
+      const middleware = workflow.middleware || {};
+
+      document.getElementById('phase4-progress-card').style.display = 'none';
+      document.getElementById('phase4-results-container').style.display = 'block';
+      document.getElementById('phase4-start-btn').disabled = false;
+      document.getElementById('phase4-start-btn').innerHTML = 'Generate Pages';
+
+      document.getElementById('p4-stat-pages').textContent = stats.totalPages || 0;
+      document.getElementById('p4-stat-categories').textContent = (stats.categories || []).length;
+      document.getElementById('p4-stat-competitors').textContent = (stats.competitorsAddressed || []).length;
+      document.getElementById('p4-stat-score').textContent = `${Math.round((stats.avgOpportunityScore || 0) * 100)}%`;
+
+      renderPagesList('pages-all-list', pages);
+      document.getElementById('middleware-code-view').textContent = middleware.code || '';
+    }
+
+    function renderPagesList(containerId, pages) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      if (pages.length === 0) {
+        container.innerHTML = '<p style="color: #71717a; padding: 20px; text-align: center;">No pages generated</p>';
+        return;
+      }
+
+      pages.forEach(page => {
+        const item = document.createElement('div');
+        item.className = 'topic-item';
+        item.style.flexDirection = 'column';
+        item.style.alignItems = 'flex-start';
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <span class="topic-name">${page.title}</span>
+            <span class="tag">${page.category || 'general'}</span>
+          </div>
+          <p style="font-size: 0.75rem; color: #71717a; margin-top: 4px;">Target: ${page.targetQuery}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function downloadPhase4JSON() {
+      if (!phase4WorkflowId || !phase4Data) return;
+      const blob = new Blob([JSON.stringify(phase4Data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `phase4-results-${phase4WorkflowId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadMiddleware() {
+      if (!phase4WorkflowId || !phase4Data) return;
+      const blob = new Blob([phase4Data.middleware.code], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'middleware.js';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyMiddleware() {
+      if (!phase4Data?.middleware?.code) return;
+      navigator.clipboard.writeText(phase4Data.middleware.code);
+      alert('Middleware code copied to clipboard!');
+    }
+
+    function viewPhase4Raw() {
+      if (!phase4WorkflowId) return;
+      window.open(`/api/phase4/${phase4WorkflowId}/results`, '_blank');
+    }
+
+    function resetPhase4UI() {
+      document.getElementById('phase4-start-btn').disabled = false;
+      document.getElementById('phase4-start-btn').innerHTML = 'Generate Pages';
+      document.getElementById('phase4-progress-card').style.display = 'none';
     }
 
     document.getElementById('website-url').addEventListener('keypress', (e) => {

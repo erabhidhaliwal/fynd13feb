@@ -338,6 +338,149 @@ GET /api/phase3/knowledge-bases/:id/phase3-results
 
 ---
 
+## Phase 4: Page Generation
+
+Phase 4 generates AI-optimized pages and middleware code to address identified citation gaps.
+
+### Overview
+
+After Phase 3 identifies gaps, Phase 4:
+1. Generates optimized markdown pages for each gap
+2. Creates SEO-friendly content with proper frontmatter
+3. Generates AI bot detection middleware
+4. Provides implementation guides for deployment
+
+### Generated Content
+
+**Page Types:**
+- General overview pages
+- Comparison pages (vs competitors)
+- Review/testimonial pages
+- Pricing pages
+- Feature documentation
+- How-to guides
+- Alternative comparison pages
+
+**Each page includes:**
+- YAML frontmatter with SEO metadata
+- Keyword optimization for AI citation
+- Competitor comparison sections
+- FAQ sections
+- Clear value propositions
+
+### Output
+
+Generated files saved to `generated-pages/{knowledgeBaseId}/`:
+
+```
+generated-pages/{id}/
+├── general-{uuid}.md
+├── comparison-{uuid}.md
+├── pricing-{uuid}.md
+├── features-{uuid}.md
+├── middleware.js
+└── ...
+```
+
+**Page Example:**
+```markdown
+---
+title: "Your Site vs Competitors - Which is Better?"
+description: "Compare Your Site vs competitors. Detailed analysis..."
+keywords: ["your site", "comparison", "competitors"]
+category: "comparison"
+targetQuery: "Low citation rate in comparison queries"
+opportunityScore: 0.85
+generatedAt: "2026-02-15T..."
+---
+
+# Your Site vs Competitors - Which is Better?
+
+Your Site is a leading platform that delivers exceptional value...
+
+## Overview
+...
+
+## Comparison with Competitors
+...
+
+## Frequently Asked Questions
+...
+```
+
+### Middleware
+
+The generated middleware detects AI bots and serves optimized content:
+
+```javascript
+// Usage in Express
+const geoMiddleware = require('./middleware');
+app.use(geoMiddleware());
+
+// AI bots detected:
+// - ChatGPT-User, GPTBot
+// - Claude-Web, claudebot
+// - Google-Extended, Bard
+// - PerplexityBot, YouBot
+// - And more...
+```
+
+### API Endpoints
+
+```bash
+# List knowledge bases with Phase 4 status
+GET /api/phase4/knowledge-bases
+
+# Start page generation
+POST /api/phase4/start
+{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}
+
+# Get workflow status
+GET /api/phase4/:id
+
+# Get generated pages
+GET /api/phase4/:id/pages
+
+# Get middleware code
+GET /api/phase4/:id/middleware
+
+# Get results
+GET /api/phase4/:id/results
+
+# Export results
+GET /api/phase4/:id/export
+
+# Get pages for a knowledge base
+GET /api/phase4/knowledge-bases/:id/pages
+
+# Get specific page content
+GET /api/phase4/knowledge-bases/:id/pages/:fileName
+
+# Get middleware for a knowledge base
+GET /api/phase4/knowledge-bases/:id/middleware
+```
+
+### Deployment
+
+1. **Download generated pages** from the UI or API
+2. **Add middleware** to your Express/Node.js server
+3. **Upload pages** to your generated-pages directory
+4. **Test** with AI bot user agents
+
+```javascript
+// Example: Express server with GEO middleware
+const express = require('express');
+const geoMiddleware = require('./generated-pages/{id}/middleware');
+
+const app = express();
+app.use(geoMiddleware());
+
+// AI bots now receive optimized content
+app.listen(3000);
+```
+
+---
+
 ## Complete GEO Workflow (Phases 3-4)
 
 After Phase 1 creates the knowledge base, the remaining phases optimize for AI citation.
@@ -472,6 +615,41 @@ GET /api/phase3/:id/export
 
 # Get Phase 3 results for a knowledge base
 GET /api/phase3/knowledge-bases/:id/phase3-results
+```
+
+### Phase 4 (Page Generation)
+
+```bash
+# List knowledge bases with Phase 4 status
+GET /api/phase4/knowledge-bases
+
+# Start page generation
+POST /api/phase4/start
+{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}
+
+# Get workflow status
+GET /api/phase4/:id
+
+# Get generated pages list
+GET /api/phase4/:id/pages
+
+# Get middleware code
+GET /api/phase4/:id/middleware
+
+# Get results
+GET /api/phase4/:id/results
+
+# Export results as JSON
+GET /api/phase4/:id/export
+
+# Get pages for a knowledge base
+GET /api/phase4/knowledge-bases/:id/pages
+
+# Get specific page content
+GET /api/phase4/knowledge-bases/:id/pages/:fileName
+
+# Get middleware for deployment
+GET /api/phase4/knowledge-bases/:id/middleware
 ```
 
 ### Original Workflow
@@ -659,7 +837,8 @@ fynd-ai/
 │   │   ├── services/
 │   │   │   ├── phase1-orchestrator.ts         # Phase 1 workflow
 │   │   │   ├── phase2-orchestrator.ts         # Phase 2 workflow
-│   │   │   └── phase3-orchestrator.ts         # Phase 3 workflow
+│   │   │   ├── phase3-orchestrator.ts         # Phase 3 workflow
+│   │   │   └── phase4-orchestrator.ts         # Phase 4 workflow
 │   │   ├── types/
 │   │   │   └── index.ts                       # TypeScript interfaces
 │   │   └── server.ts                          # API server
@@ -701,9 +880,9 @@ fynd-ai/
 ### Completed
 - [x] Phase 2: LLM Query Integration (OpenAI API + Mock mode)
 - [x] Phase 3: Citation Gap Analysis
+- [x] Phase 4: Page Generation & Middleware
 
 ### Planned
-- [ ] Phase 4: Page Generation
 - [ ] Docker Support
 - [ ] Cloud Deployment Scripts
 - [ ] Dashboard Improvements
