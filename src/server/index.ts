@@ -1,6 +1,7 @@
 import express from 'express';
 import { WorkflowManager } from '../services/workflow-manager.js';
 import { Phase1Orchestrator } from '../multi-agent/services/phase1-orchestrator.js';
+import { Phase2Orchestrator } from '../multi-agent/services/phase2-orchestrator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 const workflowManager = new WorkflowManager();
 const phase1Orchestrator = new Phase1Orchestrator();
+const phase2Orchestrator = new Phase2Orchestrator();
 const outputDir = process.env.OUTPUT_DIR || './generated-pages';
 workflowManager.setOutputDirectory(outputDir);
 
@@ -223,23 +225,100 @@ app.get('/api/phase1', (req, res) => {
   res.json({ workflows: phase1Orchestrator.getAllWorkflows() });
 });
 
+app.get('/phase2', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'phase2.html'));
+});
+
+app.get('/api/phase2/knowledge-bases', (req, res) => {
+  const kbDir = path.join(process.cwd(), 'knowledge-bases');
+  if (!fs.existsSync(kbDir)) return res.json({ knowledgeBases: [] });
+  
+  const dirs = fs.readdirSync(kbDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => {
+      const summaryPath = path.join(kbDir, dirent.name, 'summary.json');
+      let summary = null;
+      if (fs.existsSync(summaryPath)) {
+        summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+      }
+      const phase2Path = path.join(kbDir, dirent.name, 'phase2-results.json');
+      return { id: dirent.name, summary, hasPhase2: fs.existsSync(phase2Path) };
+    });
+  res.json({ knowledgeBases: dirs });
+});
+
+app.post('/api/phase2/start', async (req, res) => {
+  try {
+    const { knowledgeBaseId, apiKey } = req.body;
+    if (!knowledgeBaseId) return res.status(400).json({ error: 'Knowledge base ID is required' });
+    
+    const workflowId = await phase2Orchestrator.startQueryAnalysis(knowledgeBaseId, apiKey);
+    phase2Orchestrator.addListener(workflowId, (event, data) => {
+      console.log(`[Phase2 API] ${event}:`, data);
+    });
+    res.json({ workflowId, message: 'Phase 2 workflow started' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/phase2/:id', (req, res) => {
+  const workflow = phase2Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json(workflow);
+});
+
+app.get('/api/phase2/:id/results', (req, res) => {
+  const workflow = phase2Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.json({ queries: workflow.queries, stats: workflow.stats });
+});
+
+app.get('/api/phase2/:id/export', (req, res) => {
+  const workflow = phase2Orchestrator.getWorkflow(req.params.id);
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="phase2-results-${req.params.id}.json"`);
+  res.send(JSON.stringify({
+    workflowId: workflow.id,
+    knowledgeBaseId: workflow.knowledgeBaseId,
+    queries: workflow.queries,
+    stats: workflow.stats,
+    completedAt: workflow.completedAt
+  }, null, 2));
+});
+
+app.get('/api/phase2/knowledge-bases/:id', (req, res) => {
+  const kbPath = path.join(process.cwd(), 'knowledge-bases', req.params.id, 'knowledge-base.json');
+  if (!fs.existsSync(kbPath)) return res.status(404).json({ error: 'Knowledge base not found' });
+  res.json(JSON.parse(fs.readFileSync(kbPath, 'utf-8')));
+});
+
+app.get('/api/phase2/knowledge-bases/:id/phase2-results', (req, res) => {
+  const resultsPath = path.join(process.cwd(), 'knowledge-bases', req.params.id, 'phase2-results.json');
+  if (!fs.existsSync(resultsPath)) return res.status(404).json({ error: 'Phase 2 results not found' });
+  res.json(JSON.parse(fs.readFileSync(resultsPath, 'utf-8')));
+});
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║            GEO Workflow Server Running                      ║
-║                                                            ║
-║   Server: http://localhost:${PORT}                          ║
-║                                                            ║
-║   Endpoints:                                               ║
-║   POST /api/workflow/start - Start GEO workflow            ║
-║   GET  /api/workflow/:id - Get workflow status             ║
-║   GET  /api/workflow/:id/pages - Get generated pages       ║
-║   GET  /api/workflow/:id/middleware - Get middleware code  ║
-║                                                            ║
-║   Phase 1: http://localhost:${PORT}/phase1                  ║
-║   POST /api/phase1/start - Start crawl                     ║
-║   GET  /api/phase1/:id - Get Phase 1 status                ║
-║   GET  /api/phase1/:id/knowledge-base - Get KB             ║
+║              Fynd AI - GEO Workflow System                    ║
+║                                                              ║
+║   Server: http://localhost:${PORT}                            ║
+║   Phase 1: http://localhost:${PORT}/phase1                    ║
+║   Phase 2: http://localhost:${PORT}/phase2                    ║
+║                                                              ║
+║   Phase 1 API:                                               ║
+║   POST /api/phase1/start - Start website crawl               ║
+║   GET  /api/phase1/:id - Get workflow status                 ║
+║   GET  /api/phase1/:id/knowledge-base - Get KB               ║
+║                                                              ║
+║   Phase 2 API:                                               ║
+║   GET  /api/phase2/knowledge-bases - List knowledge bases    ║
+║   POST /api/phase2/start - Start query analysis              ║
+║   GET  /api/phase2/:id - Get workflow status                 ║
+║   GET  /api/phase2/:id/results - Get results                 ║
 ╚════════════════════════════════════════════════════════════╝
   `);
 });

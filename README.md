@@ -146,7 +146,102 @@ interface KnowledgeBase {
 
 ---
 
-## Complete GEO Workflow (Phases 2-4)
+## Phase 2: LLM Query Analysis
+
+Phase 2 analyzes how your site appears in LLM responses by running systematic queries against language models.
+
+### Overview
+
+After Phase 1 creates a knowledge base, Phase 2:
+1. Generates 60+ queries across 8 categories
+2. Runs each query against OpenAI GPT-4 (or mock mode)
+3. Checks if your site is mentioned in responses
+4. Identifies competitors that appear instead of you
+5. Calculates mention rates by category
+
+### Query Categories
+
+| Category | Example Queries | Purpose |
+|----------|-----------------|---------|
+| General | "What is {site} about?" | Brand awareness |
+| Comparison | "{site} vs competitors" | Competitive positioning |
+| Recommendations | "Best {industry} platform" | Market presence |
+| How-to | "How to use {site}" | User guidance |
+| Reviews | "{site} review" | Reputation |
+| Pricing | "{site} pricing" | Commercial intent |
+| Features | "{site} features" | Product discovery |
+| Alternatives | "{site} alternatives" | Competition analysis |
+
+### Usage
+
+**With OpenAI API Key (Real Mode):**
+```bash
+# Start server
+npm run dev
+
+# Open Phase 2 UI
+open http://localhost:3000/phase2
+
+# Or via API
+curl -X POST http://localhost:3000/api/phase2/start \
+  -H "Content-Type: application/json" \
+  -d '{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}'
+```
+
+**Without API Key (Mock Mode):**
+The system will generate simulated results for testing and demonstration purposes.
+
+### Output
+
+Results are saved to `knowledge-bases/{id}/phase2-results.json`:
+
+```json
+{
+  "workflowId": "xxx",
+  "knowledgeBaseId": "xxx",
+  "queries": [
+    {
+      "query": "What is Example about?",
+      "llmResponse": "Example is a notable provider...",
+      "yourSiteMentioned": true,
+      "competitorsMentioned": ["CompetitorA", "CompetitorB"]
+    }
+  ],
+  "stats": {
+    "totalQueries": 63,
+    "mentionCount": 42,
+    "mentionPercentage": 66.67,
+    "topCompetitors": ["HubSpot", "Salesforce", "Zapier"]
+  }
+}
+```
+
+### API Endpoints
+
+```bash
+# List available knowledge bases
+GET /api/phase2/knowledge-bases
+
+# Start query analysis
+POST /api/phase2/start
+{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}
+
+# Get workflow status
+GET /api/phase2/:id
+
+# Get results
+GET /api/phase2/:id/results
+
+# Export results
+GET /api/phase2/:id/export
+
+# Get existing Phase 2 results for a KB
+GET /api/phase2/knowledge-bases/:id/phase2-results
+```
+
+---
+
+## Complete GEO Workflow (Phases 3-4)
 
 After Phase 1 creates the knowledge base, the remaining phases optimize for AI citation.
 
@@ -236,6 +331,29 @@ GET /api/phase1/:id/link-map
 GET /api/phase1/:id/schema-analysis
 ```
 
+### Phase 2 (Query Analysis)
+
+```bash
+# List available knowledge bases
+GET /api/phase2/knowledge-bases
+
+# Start query analysis
+POST /api/phase2/start
+{"knowledgeBaseId": "xxx", "apiKey": "sk-..."}
+
+# Get workflow status
+GET /api/phase2/:id
+
+# Get query results
+GET /api/phase2/:id/results
+
+# Export results as JSON
+GET /api/phase2/:id/export
+
+# Get Phase 2 results for a knowledge base
+GET /api/phase2/knowledge-bases/:id/phase2-results
+```
+
 ### Original Workflow
 
 ```bash
@@ -291,6 +409,26 @@ npm run cli -- https://example.com
 # Start server
 npm run dev
 
+# Open the integrated UI (both Phase 1 & 2)
+open http://localhost:3000
+```
+
+### Using the Integrated Web UI
+
+The unified web interface provides a seamless workflow:
+
+1. **Phase 1 Tab** - Enter a URL and click "Start Analysis" to crawl and analyze
+2. **Phase 2 Tab** - After Phase 1 completes, click "Continue to Phase 2" to analyze LLM citations
+3. **Results** - View all data in a unified interface with tabbed navigation
+
+The UI automatically:
+- Transitions between phases
+- Pre-selects the knowledge base for Phase 2
+- Tracks completion status with visual indicators
+
+### CLI Example
+
+```bash
 # In another terminal, start a crawl
 curl -X POST http://localhost:3000/api/phase1/start \
   -H "Content-Type: application/json" \
@@ -298,6 +436,14 @@ curl -X POST http://localhost:3000/api/phase1/start \
 
 # Check status
 curl http://localhost:3000/api/phase1/{workflow-id}
+
+# List knowledge bases (for Phase 2)
+curl http://localhost:3000/api/phase2/knowledge-bases
+
+# Start Phase 2 analysis
+curl -X POST http://localhost:3000/api/phase2/start \
+  -H "Content-Type: application/json" \
+  -d '{"knowledgeBaseId": "{kb-id}"}'
 ```
 
 ---
@@ -391,10 +537,11 @@ fynd-ai/
 │   │   │   ├── schema-analysis.ts             # SchemaAnalysisAgent
 │   │   │   └── knowledge-base-generator.ts    # KB Generator
 │   │   ├── services/
-│   │   │   └── phase1-orchestrator.ts         # Phase 1 workflow
+│   │   │   ├── phase1-orchestrator.ts         # Phase 1 workflow
+│   │   │   └── phase2-orchestrator.ts         # Phase 2 workflow
 │   │   ├── types/
 │   │   │   └── index.ts                       # TypeScript interfaces
-│   │   └── server.ts                          # Phase 1 API server
+│   │   └── server.ts                          # API server
 │   ├── agents/                                # Original GEO workflow
 │   │   ├── base.ts
 │   │   ├── crawler.ts
@@ -409,7 +556,9 @@ fynd-ai/
 │   │   └── index.ts
 │   └── cli.ts
 ├── public/
-│   └── index.html                             # Web UI
+│   ├── phase1.html                            # Phase 1 Web UI
+│   ├── phase2.html                            # Phase 2 Web UI
+│   └── index.html                             # Redirect
 ├── knowledge-bases/                           # Generated KBs
 ├── generated-pages/                           # Generated pages
 ├── package.json
@@ -428,8 +577,10 @@ fynd-ai/
 - [x] Link Mapping
 - [x] Web UI
 
+### Completed
+- [x] Phase 2: LLM Query Integration (OpenAI API + Mock mode)
+
 ### Planned
-- [ ] Phase 2: LLM Query Integration (real API)
 - [ ] Phase 3: Advanced Gap Analysis
 - [ ] Phase 4: Page Generation
 - [ ] Docker Support
